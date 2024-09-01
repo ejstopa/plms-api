@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Application.Features.models;
-using Application.Features.models.Commands;
-using Domain.Entities;
+using Application.Features.models.Queries.GetModelsByFamily;
 using MediatR;
-using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Endpoints
 {
@@ -16,13 +11,21 @@ namespace Api.Endpoints
         {
             var baseUrl = app.MapGroup("models");
 
-            baseUrl.MapPost("", async (ISender sender, CreateModelCommand modelData) =>
+            baseUrl.MapGet("", async (ISender sender, [FromQuery] string family) =>
             {
-                ModelResponseDto model = await sender.Send(modelData);
+                List<ModelResponseDto> models = await sender.Send(new GetModelsByFamilyCommand { Family = family });
 
-                return Results.Ok(model);
-            });
+                if (models.Count == 0)
+                {
+                    return Results.NotFound("Nenhum model foi encontrado");
+                }
+
+                return Results.Ok(models);
+
+            }).WithName("GetModelsByFamily");
+            
         }
+
 
     }
 }

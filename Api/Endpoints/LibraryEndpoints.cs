@@ -14,11 +14,14 @@ namespace Api.Endpoints
         {
             var baseUrl = app.MapGroup("library");
 
-            baseUrl.MapGet("directories", async (ISender sender) =>{
+            baseUrl.MapGet("directories", async (ISender sender) =>
+            {
                 List<LibraryDirectoryResponse> libraryDirectories = await sender.Send(new GetLibraryDirectoriesCommand());
 
                 return Results.Ok(libraryDirectories);
             }).WithName("GetLiibraryDirectories");
         }
+
+
     }
 }

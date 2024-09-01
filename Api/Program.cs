@@ -2,14 +2,14 @@ using Api;
 using Api.Endpoints;
 using Application;
 using Infrastructure;
-
+using Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApiServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices();
-
+builder.Services.AddDomainServices();
 
 var app = builder.Build();
 
@@ -25,6 +25,7 @@ app.UseCors("CorsPolicy");
 app.AddUserEndpoints();
 app.AddModelEndpoints();
 app.AddLibraryEndpoints();
+app.AddItemEndpoints();
 
 app.Run();
 
