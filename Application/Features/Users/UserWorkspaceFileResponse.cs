@@ -8,6 +8,8 @@ namespace Application.Features.Users
         public string Extension { get; set; } = string.Empty;
         public string FullPath { get; set; } = string.Empty;
         public DateTime LastModifiedAt { get; set; }
-        public bool IsRevision { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string Revision { get; set; } = string.Empty;
+        public int ItemId { get; set; }
     }
 }

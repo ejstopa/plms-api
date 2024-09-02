@@ -18,6 +18,8 @@ namespace Infrastructure
             services.AddScoped<IModelRepository, ModelRepository>();
             services.AddScoped<IUserWorkspaceFIlesService, UserWorkspaceFilesService>();
             services.AddScoped<ILibraryFilesService, LibraryFilesService>();
+            services.AddScoped<IFileRevisionService, FileRevisionService>();
+            services.AddScoped<IItemRepository, ItemRepository>();
         }
     }
 }

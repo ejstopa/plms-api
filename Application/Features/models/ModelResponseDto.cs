@@ -11,15 +11,13 @@ namespace Application.Features.models
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string CommonName { get; set; } = string.Empty;
-        public string Revision { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
-        public string? Description { get; set; } = string.Empty;
-        public string? LibraryFolder { get; set; } = string.Empty;
+        public int Version { get; set; } = 1;
+        public string Revision { get; set; } = "-";
+        public string FilePath { get; set; } = string.Empty;
+        public int ItemId { get; set; }
         public int CreatedBy { get; set; }
-        public int? CheckedOutBy { get; set; }
-        public int? LastModifiedBy { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime? LastModifiedAt { get; set; }
-        public DateTime? CheckedOutAt { get; set; }
+        public int CheckedOutBy { get; set; }
     }
 }

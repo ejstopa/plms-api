@@ -9,7 +9,9 @@ namespace Application.Abstractions.Repositories
     public interface IModelRepository
     {
         public Task<Model> CreateModel(Model model);
-
         public Task<IEnumerable<Model>> GetUserCheckedoutModels(int userId);
+        public Task<List<Model>> GetModelsByFamily(string family);
+        public Task<Model?> GetModelById(int id);
+        public Task<List<Model>> GetLatestModelsByItem(int itemId);
     }
 }

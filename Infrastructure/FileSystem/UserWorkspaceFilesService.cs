@@ -2,6 +2,8 @@
 using Application.Abstractions.FileSystem;
 using Application.Abstractions.Repositories;
 using Domain.Entities;
+using Domain.Enums;
+using Domain.Services;
 using Infrastructure.Data.Repositories;
 using Microsoft.Extensions.Configuration;
 
@@ -11,11 +13,16 @@ namespace Infrastructure.FileSystem
     {
         private readonly IConfiguration _configuration;
         private readonly IModelRepository _modelRepository;
+        private readonly IModelRevisionService _modelRevisionService;
 
-        public UserWorkspaceFilesService(IConfiguration configuration, IModelRepository modelRepository)
+        public UserWorkspaceFilesService(
+            IConfiguration configuration,
+            IModelRepository modelRepository,
+            IModelRevisionService modelRevisionService)
         {
             _configuration = configuration;
             _modelRepository = modelRepository;
+            _modelRevisionService = modelRevisionService;
         }
 
         public string GetUserWorkspaceDirectory(User user)
@@ -30,7 +37,6 @@ namespace Infrastructure.FileSystem
 
             return workspaceDir;
         }
-
 
         public async Task<List<UserFile>> GetUserUserWorkspaceFiles(User user)
         {
@@ -51,13 +57,17 @@ namespace Infrastructure.FileSystem
                 fileExtensionWithVersion[.. fileExtensionWithVersion.LastIndexOf('.')] :
                 fileExtensionWithVersion;
 
+                Model? checkedoutModel =  userCheckedoutModels.FirstOrDefault(model => model?.Name == fileName && model.Type == fileExtension);
+
                 userFiles.Add(new UserFile()
                 {
                     Name = fileName,
                     Extension = fileExtension,
                     FullPath = filePath,
                     LastModifiedAt = File.GetLastWriteTime(filePath),
-                    IsRevision = userCheckedoutModels.Where(model => model?.Name == fileName && model.Type == fileExtension).Any()
+                    Status = checkedoutModel != null? FileStatus.checkedOut.ToString() : FileStatus.newItem.ToString(),
+                    Revision = checkedoutModel != null? _modelRevisionService.IncrementRevision(checkedoutModel.Revision) : "-",
+                    ItemId = checkedoutModel != null? checkedoutModel.ItemId : 0
                 });
             }
 

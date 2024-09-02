@@ -1,6 +1,6 @@
 namespace Domain.Enums
 {
-    public enum ItemStaus
+    public enum FileStatus
     {  
       newItem,
       checkedOut,
