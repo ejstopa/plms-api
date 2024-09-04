@@ -38,12 +38,10 @@ namespace Infrastructure.FileSystem
             return workspaceDir;
         }
 
-        public async Task<List<UserFile>> GetUserUserWorkspaceFiles(User user)
+        public  List<UserFile> GetUserUserWorkspaceFiles(User user, List<string>? filterExtensions = null)
         {
             string userWorkspaceDir = GetUserWorkspaceDirectory(user);
             List<string> workspaceFilePaths = Directory.GetFiles(userWorkspaceDir).ToList();
-
-            IEnumerable<Model> userCheckedoutModels = await _modelRepository.GetUserCheckedoutModels(user.Id);
 
             List<UserFile> userFiles = [];
 
@@ -57,20 +55,16 @@ namespace Infrastructure.FileSystem
                 fileExtensionWithVersion[.. fileExtensionWithVersion.LastIndexOf('.')] :
                 fileExtensionWithVersion;
 
-                Model? checkedoutModel =  userCheckedoutModels.FirstOrDefault(model => model?.Name == fileName && model.Type == fileExtension);
-
+                if (filterExtensions != null && filterExtensions.Contains(fileExtension))
                 userFiles.Add(new UserFile()
                 {
                     Name = fileName,
                     Extension = fileExtension,
                     FullPath = filePath,
                     LastModifiedAt = File.GetLastWriteTime(filePath),
-                    Status = checkedoutModel != null? FileStatus.checkedOut.ToString() : FileStatus.newItem.ToString(),
-                    Revision = checkedoutModel != null? _modelRevisionService.IncrementRevision(checkedoutModel.Revision) : "-",
-                    ItemId = checkedoutModel != null? checkedoutModel.ItemId : 0
                 });
             }
-
+            
             return userFiles;
         }
 
@@ -87,5 +81,6 @@ namespace Infrastructure.FileSystem
 
            return true;
         }
+
     }
 }

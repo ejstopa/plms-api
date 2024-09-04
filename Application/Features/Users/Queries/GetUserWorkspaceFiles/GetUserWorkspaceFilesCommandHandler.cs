@@ -30,7 +30,7 @@ namespace Application.Features.Users.Queries.GetUserFiles
             }
 
             List<UserWorkspaceFileResponse> userFiles = _mapper.Map<List<UserWorkspaceFileResponse>>(
-                await _userFIlesService.GetUserUserWorkspaceFiles(user));
+                 _userFIlesService.GetUserUserWorkspaceFiles(user));
 
             return userFiles;
         }

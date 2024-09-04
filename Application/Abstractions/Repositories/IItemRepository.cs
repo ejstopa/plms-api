@@ -9,6 +9,9 @@ namespace Application.Abstractions.Repositories
     public interface IItemRepository
     {
         public Task<Item?> GetItemById(int itemId);
+        public Task<List<Item>> GetItemsByFamily(string family);
+        public Task<List<Item>> GetUserCheckedOutItems(int userId);
+        public Task<List<Item>> GetItemsByUserWorkspace(User user);
         public Task<bool> ToggleItemCheckout(int itemId, int userId, bool checkedOut);
         
     }

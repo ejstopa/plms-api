@@ -1,9 +1,9 @@
 namespace Domain.Enums
 {
-    public enum FileStatus
+    public enum ItemStatus
     {  
       newItem,
       checkedOut,
-      realeased
+      released
     }
 }

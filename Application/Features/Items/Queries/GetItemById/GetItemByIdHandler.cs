@@ -1,13 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Application.Abstractions.Repositories;
 using AutoMapper;
 using Domain.Entities;
 using MediatR;
 
-namespace Application.Features.Items.Queries
+namespace Application.Features.Items.GetItemByIdQuery.Queries
 {
     public class GetItemByIdHandler : IRequestHandler<GetItemByIdQuery, ItemResponseDto>
     {

@@ -1,7 +1,7 @@
 
 namespace Domain.Errors
 {
-    public record Error(string Message)
+    public record Error(int StatusCode, string Message)
     {
         
     }

@@ -39,18 +39,6 @@ namespace Api.Endpoints
                 return Results.Ok(user);
             }).WithName("Login");
 
-            baseUrl.MapGet("{userId}/workspace-files", async (ISender sender, int userId) =>
-            {
-                List<UserWorkspaceFileResponse>? userFileResponse = await sender.Send(new GetUserWorkspaceFilesCommand() { UserId = userId });
-
-                if (userFileResponse is null)
-                {
-                    return Results.NotFound("Usuário não encontrado");
-                }
-
-                return Results.Ok(userFileResponse);
-            }).WithName("GetUserWorkspaceFiles");
-
             baseUrl.MapDelete("{userId}/workspace-files/{filePath}", async (ISender sender, int userId, string filePath) =>{
                 bool exclusionSucceded = await sender.Send(new DeleteUserWorkspaceFilesCommand() {FilePath = filePath});
 

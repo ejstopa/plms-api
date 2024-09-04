@@ -6,7 +6,7 @@ namespace Application.Abstractions.FileSystem
     {
         public string GetUserWorkspaceDirectory(User user);
 
-        public Task<List<UserFile>> GetUserUserWorkspaceFiles(User user);
+        public List<UserFile> GetUserUserWorkspaceFiles(User user, List<string>? filterExtensions = null);
 
         public Boolean DeleteUserWorkspaceFile(string filePath);
       

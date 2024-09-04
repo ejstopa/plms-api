@@ -29,17 +29,17 @@ namespace Application.Features.Items.Commands.CreateItemReservation
         public async Task<Result<List<ModelResponseDto>>> Handle(CreateItemReservationCommand request, CancellationToken cancellationToken)
         {
             User? user = await _userRepository.GetUserById(request.UserId);
-            if (user is null) return Result<List<ModelResponseDto>>.Failure(new Error("O usuário não foi encontrado"));
+            if (user is null) return Result<List<ModelResponseDto>>.Failure(new Error(400, "O usuário não foi encontrado"));
          
             Item? item = await _itemRepository.GetItemById(request.ItemId);
-            if (item is null) return Result<List<ModelResponseDto>>.Failure(new Error("O item não foi encontrado"));
-            if (item.CheckedOutBy != 0) return Result<List<ModelResponseDto>>.Failure(new Error("O item já está reservado"));
+            if (item is null) return Result<List<ModelResponseDto>>.Failure(new Error(400, "O item não foi encontrado"));
+            if (item.CheckedOutBy != 0) return Result<List<ModelResponseDto>>.Failure(new Error(401, "O item já está reservado"));
 
             List<Model> models = await _modelRepository.GetLatestModelsByItem(request.ItemId);
-            if (models.Count == 0) return Result<List<ModelResponseDto>>.Failure(new Error("Não existem arquivos relacionados a esse item"));
+            if (models.Count == 0) return Result<List<ModelResponseDto>>.Failure(new Error(409, "Não existem arquivos relacionados a esse item"));
 
             bool itemCheckedOut = await _itemRepository.ToggleItemCheckout(request.ItemId, request.UserId, true);
-            if (!itemCheckedOut) return Result<List<ModelResponseDto>>.Failure(new Error("Ocorreu um erro ao tentar reservar o item"));
+            if (!itemCheckedOut) return Result<List<ModelResponseDto>>.Failure(new Error(409, "Ocorreu um erro ao tentar reservar o item"));
 
             try
             {
@@ -50,7 +50,7 @@ namespace Application.Features.Items.Commands.CreateItemReservation
             }
             catch
             {
-                return Result<List<ModelResponseDto>>.Failure(new Error("Ocorreu um erro ao tentar copiar os arquivos para a workspace"));
+                return Result<List<ModelResponseDto>>.Failure(new Error(409, "Ocorreu um erro ao tentar copiar os arquivos para a workspace"));
             }
 
             List<ModelResponseDto> modelResponseDtos = _mapper.Map<List<ModelResponseDto>>(models);
