@@ -18,10 +18,10 @@ namespace Application.Features.Users.Commands.AuthenticateUser
         }
 
         public async Task<UserResponseDto?> Handle(AuthenticateUserCommand request, CancellationToken cancellationToken)
-        {
+        {        
             User? user = await _userRepository.GetUserByName(request.Name);
 
-            if (user is null || user.Password != request.Password)
+            if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
             {
                 return null;
             }

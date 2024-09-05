@@ -26,8 +26,9 @@ namespace Api.Endpoints
                 return Results.Ok(item);
             }).WithName("GetItemById");
 
-            app.MapGet("items", async (ISender sender, [FromQuery] string family) =>{
-                List<ItemResponseDto> items = await sender.Send(new GetItemsByFamilyCommand{Family = family});
+            app.MapGet("items", async (ISender sender, [FromQuery] string family) =>
+            {
+                List<ItemResponseDto> items = await sender.Send(new GetItemsByFamilyCommand { Family = family });
 
                 return Results.Ok(items);
             });
@@ -58,16 +59,16 @@ namespace Api.Endpoints
             });
 
             app.MapDelete("items/reservations", async (ISender sender, [FromQuery] int itemId, [FromQuery] int userId) =>
-           {
-               var result = await sender.Send(new DeleteItemReservationCommand{ItemId = itemId, UserId = userId});
+            {
+                var result = await sender.Send(new DeleteItemReservationCommand { ItemId = itemId, UserId = userId });
 
-               if (!result.IsSuccess)
-               {
-                   return Results.BadRequest(result.Error!.Message);
-               }
+                if (!result.IsSuccess)
+                {
+                    return Results.BadRequest(result.Error!.Message);
+                }
 
-               return Results.Ok(result.Value!);
-           });
+                return Results.Ok(result.Value!);
+            });
 
 
         }
