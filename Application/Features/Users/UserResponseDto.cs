@@ -7,7 +7,7 @@ namespace Application.Features.Users
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string WindowsUser { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
+        public int RoleId { get; set; }
 
         public UserResponseDto()
         {
@@ -19,7 +19,7 @@ namespace Application.Features.Users
             Id = user.Id;
             Name = user.Name;
             WindowsUser = user.WindowsUser;
-            Role = user.Role;
+            RoleId = user.RoleId;
         }
 
     }
