@@ -32,11 +32,11 @@ CREATE TABLE IF NOT EXISTS "Items" (
 	PRIMARY KEY ("Id")
 );
 
--- Copiando dados para a tabela plms_db.Items: -1 rows
+-- Copiando dados para a tabela plms_db.Items: 2 rows
 /*!40000 ALTER TABLE "Items" DISABLE KEYS */;
 INSERT INTO "Items" ("Id", "Name", "LastRevision", "Description", "Family", "Status", "CreatedBy", "CreatedAt", "LastModifiedBy", "LastModifiedAt", "CheckedOutBy") VALUES
-	(1, '00010001', '-', 'CHAPA', '0001', 'checkedOut', 1, '2024-08-30', 1, '2024-08-30', 1),
-	(2, '00010002', '-', 'CHAPA', '0001', 'released', 1, '2024-08-30', 1, '2024-08-30', 0);
+	(1, '00010001', '-', 'CHAPA PLANA', '0001', 'checkedOut', 1, '2024-08-30', 1, '2024-08-30', 1),
+	(2, '00010002', '-', 'CHAPA PLANA', '0001', 'released', 1, '2024-08-30', 1, '2024-08-30', 0);
 /*!40000 ALTER TABLE "Items" ENABLE KEYS */;
 
 -- Copiando estrutura para tabela plms_db.Models
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS "Models" (
 	PRIMARY KEY ("Id")
 );
 
--- Copiando dados para a tabela plms_db.Models: -1 rows
+-- Copiando dados para a tabela plms_db.Models: 3 rows
 /*!40000 ALTER TABLE "Models" DISABLE KEYS */;
 INSERT INTO "Models" ("Id", "Name", "CommonName", "Type", "Version", "Revision", "FilePath", "ItemId", "CreatedBy", "CreatedAt", "CheckedOutBy", "LastModifiedBy", "LastModifiedAt") VALUES
 	(3, '00010001', '0001.0001', '.prt', 1, '-', 'C:\px-infrastructure\library\0001\00010001.prt', 1, 1, '2024-08-30', 1, NULL, NULL),
@@ -76,10 +76,10 @@ CREATE TABLE IF NOT EXISTS "Users" (
 	PRIMARY KEY ("Id")
 );
 
--- Copiando dados para a tabela plms_db.Users: -1 rows
+-- Copiando dados para a tabela plms_db.Users: 1 rows
 /*!40000 ALTER TABLE "Users" DISABLE KEYS */;
 INSERT INTO "Users" ("Id", "Name", "Password", "WindowsUser", "Role", "IsActive") VALUES
-	(1, 'user1', 'senha_user1', 'ejsto', 'user', b'1');
+	(1, 'user1', '$2a$11$GyTMUepWP64t7X9spW5MG.6U07CzzuLTq8IH7rb3llb2Pspz8wHji', 'ejsto', 'user', b'1');
 /*!40000 ALTER TABLE "Users" ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
