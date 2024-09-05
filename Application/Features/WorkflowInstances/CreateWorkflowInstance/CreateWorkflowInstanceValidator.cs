@@ -53,7 +53,7 @@ namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
 
             if (!ValidateUserRole(user))
             {
-                return Result<bool>.Failure(new Error(401, "Usuário não autorizado"));
+                return Result<bool>.Failure(new Error(401, "Usuário não autorizado para inciar fluxos de liberação"));
             }
 
             return Result<bool>.Success(true);
