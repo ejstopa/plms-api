@@ -40,6 +40,17 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
+
+        public async Task<Item?> GetItemByName(string itemName)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = "SELECT * FROM Items WHERE Name = @itemName";
+
+                return await connection.QueryFirstOrDefaultAsync<Item>(sql, new {itemName});
+            }
+        }
+
         public async Task<List<Item>> GetUserCheckedOutItems(int userId)
         {
             using (SqlConnection connection = new(_connectionString))

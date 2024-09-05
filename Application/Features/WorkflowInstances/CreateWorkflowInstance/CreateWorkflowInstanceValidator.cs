@@ -10,32 +10,36 @@ namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
     public class CreateWorkflowInstanceValidator : ICreateWorkflowInstanceValidator
     {
         private readonly IUserRepository _userRepository;
+        private readonly IItemRepository _itemRepository;
 
-        public CreateWorkflowInstanceValidator(IUserRepository userRepository)
+        public CreateWorkflowInstanceValidator(IUserRepository userRepository, IItemRepository itemRepository)
         {
             _userRepository = userRepository;
+            _itemRepository = itemRepository;
         }
 
         public async Task<Result<bool>> Validate(CreateWorkflowInstanceCommand request)
         {
-            User? user = await _userRepository.GetUserById(request.UserId);
-            Result<bool> userValidationResult = ValidateUser(user);
+            Result<bool> userValidationResult = await ValidateUser(request.UserId);
 
             if (!userValidationResult.IsSuccess)
             {
                 return userValidationResult;
             }
 
+            Result<bool> ItemValidationResult = await ValidateItem(request);
+
+            if (!ItemValidationResult.IsSuccess)
+            {
+                return ItemValidationResult;
+            }
 
             return await Task.FromResult(Result<bool>.Success(true));
         }
 
-        private Result<bool> ValidateUser(User? user)
+        private async Task<Result<bool>> ValidateUser(int userId)
         {
-            if (user is null)
-            {
-                return Result<bool>.Failure(new Error(404, "Usuário não encontrado"));
-            }
+            User? user = await _userRepository.GetUserById(userId);
 
             if (user is null)
             {
@@ -50,6 +54,23 @@ namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
             if (!ValidateUserRole(user))
             {
                 return Result<bool>.Failure(new Error(401, "Usuário não autorizado"));
+            }
+
+            return Result<bool>.Success(true);
+        }
+
+        private async Task<Result<bool>> ValidateItem(CreateWorkflowInstanceCommand request)
+        {
+            Item? item = await _itemRepository.GetItemByName(request.ItemName);
+
+            if (item != null && item.CheckedOutBy == 0)
+            {
+                return Result<bool>.Failure(new Error(400, "o item não está reservado"));
+            }
+
+            if (item != null && item.CheckedOutBy != request.UserId)
+            {
+                return Result<bool>.Failure(new Error(401, "o item está reservado para outro usuário"));
             }
 
             return Result<bool>.Success(true);
