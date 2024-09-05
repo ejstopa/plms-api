@@ -65,12 +65,17 @@ namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
 
             if (item != null && item.CheckedOutBy == 0)
             {
-                return Result<bool>.Failure(new Error(400, "o item não está reservado"));
+                return Result<bool>.Failure(new Error(400, "O item não está reservado"));
             }
 
             if (item != null && item.CheckedOutBy != request.UserId)
             {
-                return Result<bool>.Failure(new Error(401, "o item está reservado para outro usuário"));
+                return Result<bool>.Failure(new Error(401, "O item está reservado para outro usuário"));
+            }
+
+            if (item == null)
+            {
+                return Result<bool>.Failure(new Error(404, "O item não tem código reservado"));
             }
 
             return Result<bool>.Success(true);
