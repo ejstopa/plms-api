@@ -26,6 +26,7 @@ app.AddUserEndpoints();
 app.AddModelEndpoints();
 app.AddLibraryEndpoints();
 app.AddItemEndpoints();
+app.AddWorkflowInstancesEndpoints();
 
 app.Run();
 

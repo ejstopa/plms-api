@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 using Application.Abstractions.Repositories;
 using Domain.Entities;
 using MediatR;
@@ -32,7 +27,7 @@ namespace Application.Features.Users.Queries.GetUserById
                 Id = user.Id,
                 Name = user.Name,
                 WindowsUser = user.WindowsUser,
-                Role = user.Role
+                RoleId = user.RoleId
             };
 
             return await Task.FromResult(userResponseDto);

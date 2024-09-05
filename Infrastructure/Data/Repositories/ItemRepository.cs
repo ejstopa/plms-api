@@ -64,7 +64,7 @@ namespace Infrastructure.Data.Repositories
             }
 
             List<Model> models = await GetItemsModels(items.ToList());
-            List<Item> itemsWithModels =  AddItemsModels(items.ToList(), models);
+            List<Item> itemsWithModels = AddItemsModels(items.ToList(), models);
 
             return itemsWithModels;
         }
@@ -160,11 +160,22 @@ namespace Infrastructure.Data.Repositories
                     LastModifiedAt = file.LastModifiedAt
                 }));
 
+                int familyResult = 0;
+                bool isFamilyNumber = false;
+
+                try
+                {
+                    isFamilyNumber = int.TryParse(fileGroup.AsList()[0].Name[..4], out familyResult);
+                }
+                catch { }
+
                 newItems.Add(new Item
                 {
                     Name = fileGroup.AsList()[0].Name,
                     Status = ItemStatus.newItem.ToString(),
+                    Family = isFamilyNumber ? fileGroup.AsList()[0].Name[..4] : "",
                     Models = models
+
                 });
             });
 

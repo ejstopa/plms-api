@@ -1,5 +1,6 @@
 
 using System.Reflection;
+using Application.Features.WorkflowInstances.CreateWorkflowInstance;
 using Application.Mapping;
 using FluentValidation;
 using MediatR;
@@ -14,6 +15,7 @@ namespace Application
             services.AddMediatR(Assembly.GetExecutingAssembly());
             services.AddAutoMapper(typeof(AutoMapperProfile));
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+            services.AddScoped<ICreateWorkflowInstanceValidator, CreateWorkflowInstanceValidator>();
         }
     }
 }
