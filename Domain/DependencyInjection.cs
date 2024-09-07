@@ -7,6 +7,8 @@ namespace Domain
     {
         public static void AddDomainServices(this IServiceCollection services){
             services.AddScoped<IModelRevisionService, ModelRevisionService>();
+            services.AddScoped<IItemNameReservationService, ItemNameReservationService>();
+            
         }
     }
 }

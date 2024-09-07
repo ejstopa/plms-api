@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Linq;
 using System.Threading.Tasks;
+using Application.Features.ItemFamilies;
+using Application.Features.ItemReservations.Commands;
 using Application.Features.Items;
 using Application.Features.Library;
 using Application.Features.models;
@@ -20,6 +22,8 @@ namespace Application.Mapping
             CreateMap<UserFile, UserWorkspaceFileResponse>();
             CreateMap<LibraryDirectory, LibraryDirectoryResponse>();
             CreateMap<Item, ItemResponseDto>();
+            CreateMap<ItemNameReservation, ItemNameReservationResponseDto>();
+            CreateMap<ItemFamily, ItemFamilyResponseDto>();
         }
     }
 }

@@ -20,6 +20,8 @@ namespace Infrastructure
             services.AddScoped<ILibraryFilesService, LibraryFilesService>();
             services.AddScoped<IFileRevisionService, FileRevisionService>();
             services.AddScoped<IItemRepository, ItemRepository>();
+            services.AddScoped<IItemNameReservationRepository, ItemNameReservationRepository>();
+            services.AddScoped<IItemFamilyRepository, ItemFamilyRepository>();
         }
     }
 }

@@ -11,11 +11,13 @@ namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
     {
         private readonly IUserRepository _userRepository;
         private readonly IItemRepository _itemRepository;
+        private readonly IItemNameReservationRepository _itemNameReservationRepository;
 
-        public CreateWorkflowInstanceValidator(IUserRepository userRepository, IItemRepository itemRepository)
+        public CreateWorkflowInstanceValidator(IUserRepository userRepository, IItemRepository itemRepository, IItemNameReservationRepository itemNameReservationRepository)
         {
             _userRepository = userRepository;
             _itemRepository = itemRepository;
+            _itemNameReservationRepository = itemNameReservationRepository;
         }
 
         public async Task<Result<bool>> Validate(CreateWorkflowInstanceCommand request)
@@ -75,7 +77,18 @@ namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
 
             if (item == null)
             {
-                return Result<bool>.Failure(new Error(404, "O item não tem código reservado"));
+                ItemNameReservation? itemNameReservation = await _itemNameReservationRepository.GetItemNameReservationByName(request.ItemName);
+
+                if (itemNameReservation is null)
+                {
+                    return Result<bool>.Failure(new Error(404, "O item não tem código reservado"));
+                }
+
+                if (itemNameReservation.UserId != request.UserId)
+                {
+                    return Result<bool>.Failure(new Error(401, "O código desse item foi reservado por outro usuário"));
+                }
+
             }
 
             return Result<bool>.Success(true);
@@ -90,5 +103,6 @@ namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
 
             return true;
         }
+
     }
 }

@@ -19,7 +19,7 @@ namespace Infrastructure.Data.Repositories
 {
     public class ItemRepository : IItemRepository
     {
-        readonly string _connectionString;
+        private readonly string _connectionString;
         private readonly IUserWorkspaceFIlesService _userWorkspaceFIlesService;
         private readonly IModelRevisionService _modelRevisionService;
 
