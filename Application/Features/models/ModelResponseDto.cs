@@ -12,7 +12,7 @@ namespace Application.Features.models
         public string Name { get; set; } = string.Empty;
         public string CommonName { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
-        public int Version { get; set; } = 1;
+        public int Version { get; set; } = 0;
         public string Revision { get; set; } = "-";
         public string FilePath { get; set; } = string.Empty;
         public int ItemId { get; set; }

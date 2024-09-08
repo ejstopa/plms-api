@@ -9,6 +9,7 @@ using Application.Features.Items;
 using Application.Features.Library;
 using Application.Features.models;
 using Application.Features.Users;
+using Application.Features.WorkflowInstances;
 using AutoMapper;
 using Domain.Entities;
 
@@ -24,6 +25,7 @@ namespace Application.Mapping
             CreateMap<Item, ItemResponseDto>();
             CreateMap<ItemNameReservation, ItemNameReservationResponseDto>();
             CreateMap<ItemFamily, ItemFamilyResponseDto>();
+            CreateMap<WorkflowInstance, WorkflowInstanceResponseDto>();
         }
     }
 }

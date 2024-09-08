@@ -70,8 +70,6 @@ namespace Api.Endpoints
 
                 return Results.Ok(result.Value!);
             });
-
-
         }
     }
 }

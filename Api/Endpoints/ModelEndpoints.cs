@@ -1,7 +1,8 @@
-using Application.Features.models;
-using Application.Features.models.Queries.GetModelsByFamily;
+
+using Application.Features.models.Queries.DownloadModel;
+using Domain.Services;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
+
 
 namespace Api.Endpoints
 {
@@ -11,19 +12,26 @@ namespace Api.Endpoints
         {
             var baseUrl = app.MapGroup("models");
 
-            baseUrl.MapGet("", async (ISender sender, [FromQuery] string family) =>
+            baseUrl.MapGet("download/{filepath}", async (ISender sender, IFileNameService fileNameService, string filePath) =>
             {
-                List<ModelResponseDto> models = await sender.Send(new GetModelsByFamilyCommand { Family = family });
+                byte[] file = await sender.Send(new DownloadModelCommand { FilePath = filePath });
+                if (file.Length == 0) return Results.Conflict("File" + filePath);
 
-                if (models.Count == 0)
-                {
-                    return Results.NotFound("Nenhum model foi encontrado");
-                }
+                string? fileName = fileNameService.GetFileName(filePath);
+                if (fileName is null) return Results.Conflict("fileName");
 
-                return Results.Ok(models);
+                string? fileExtension = fileNameService.GetFileExtension(filePath);
+                if (fileExtension is null) return  Results.Conflict("fileExtension");
 
-            }).WithName("GetModelsByFamily");
-            
+                string? mimeType = fileNameService.GetFileMimiType(fileExtension!);
+                if (mimeType is null) return Results.Conflict("mimeType" + fileExtension);
+
+
+                return Results.File(file, mimeType, $"{fileName}{fileExtension}");
+            });
+
+
+
         }
 
 
