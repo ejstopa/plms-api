@@ -5,7 +5,7 @@ using Domain.Errors;
 using Domain.Results;
 
 
-namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
+namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
 {
     public class CreateWorkflowInstanceValidator : ICreateWorkflowInstanceValidator
     {

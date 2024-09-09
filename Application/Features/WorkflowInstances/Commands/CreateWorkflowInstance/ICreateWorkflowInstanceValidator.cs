@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Domain.Results;
 
-namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
+namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
 {
     public interface ICreateWorkflowInstanceValidator
     {

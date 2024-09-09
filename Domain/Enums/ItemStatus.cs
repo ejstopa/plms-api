@@ -4,6 +4,8 @@ namespace Domain.Enums
     {  
       newItem,
       checkedOut,
-      released
+      released,
+      inWorkflow
+
     }
 }

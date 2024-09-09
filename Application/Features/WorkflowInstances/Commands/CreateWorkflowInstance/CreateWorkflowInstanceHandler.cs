@@ -1,4 +1,5 @@
 using System.Data.SqlTypes;
+using Application.Abstractions.FileSystem;
 using Application.Abstractions.Repositories;
 using AutoMapper;
 using Domain.Entities;
@@ -8,7 +9,7 @@ using Domain.Results;
 using Domain.Services;
 using MediatR;
 
-namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
+namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
 {
     public class CreateWorkflowInstanceHandler : IRequestHandler<CreateWorkflowInstanceCommand, Result<WorkflowInstanceResponseDto>>
     {
@@ -18,14 +19,18 @@ namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
         private readonly IItemRepository _itemRepository;
         private readonly IWorkflowInstanceRepository _workflowInstanceRepository;
         private readonly IModelRevisionService _modelRevisionService;
+        private readonly IUserWorkspaceFIlesService _userWorkspaceFIlesService;
+        private readonly IUserWorkflowFilesService _userWorkflowFilesService;
 
         public CreateWorkflowInstanceHandler(
             IMapper mapper,
-            ICreateWorkflowInstanceValidator validator, 
-            IUserRepository userRepository, 
-            IItemRepository itemRepository, 
-            IWorkflowInstanceRepository workflowInstanceRepository, 
-            IModelRevisionService modelRevisionService)
+            ICreateWorkflowInstanceValidator validator,
+            IUserRepository userRepository,
+            IItemRepository itemRepository,
+            IWorkflowInstanceRepository workflowInstanceRepository,
+            IModelRevisionService modelRevisionService,
+            IUserWorkspaceFIlesService userWorkspaceFIlesService,
+            IUserWorkflowFilesService userWorkflowFilesService)
         {
             _mapper = mapper;
             _validator = validator;
@@ -33,7 +38,8 @@ namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
             _itemRepository = itemRepository;
             _workflowInstanceRepository = workflowInstanceRepository;
             _modelRevisionService = modelRevisionService;
-
+            _userWorkspaceFIlesService = userWorkspaceFIlesService;
+            _userWorkflowFilesService = userWorkflowFilesService;
         }
         public async Task<Result<WorkflowInstanceResponseDto>> Handle(CreateWorkflowInstanceCommand request, CancellationToken cancellationToken)
         {
@@ -49,19 +55,36 @@ namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
 
             Item? item = await _itemRepository.GetItemByName(request.ItemName);
 
+            if (item != null)
+            {
+                Item? itemUpdated = await _itemRepository.SetItemStatus(item.Id, ItemStatus.inWorkflow);
+            }
+
             WorkflowInstance workflowInstance = new()
             {
                 Id = 0,
                 WorkflowTemplateId = workflowTemplateId,
                 ItemId = item != null ? item.Id : null,
                 ItemName = request.ItemName,
-                ItemRevision = item != null? _modelRevisionService.IncrementRevision(item.LastRevision) : "-",
+                ItemRevision = item != null ? _modelRevisionService.IncrementRevision(item.LastRevision) : "-",
                 UserId = request.UserId,
                 CurrentStepId = 1,
                 PreviousStepId = null,
                 Status = WorkflowStatus.InWork.ToString(),
                 Message = ""
             };
+
+            User? user = await _userRepository.GetUserById(request.UserId);
+
+            if (user is null)
+            {
+                return Result<WorkflowInstanceResponseDto>.Failure(new Error(404, "Usário não encontrado"));
+            }
+
+            List<UserFile> workspaceFiles = _userWorkspaceFIlesService.GetUserUserWorkspaceFiles(user, [".prt", ".asm", ".drw"]);
+
+            List<UserFile> itemFiles = workspaceFiles.Where(file => file.Name == request.ItemName).ToList();
+            itemFiles.ForEach(file => _userWorkflowFilesService.MoveFileToWorkflowsDirectory(file.FullPath, user));
 
             WorkflowInstance workflowCreated = await _workflowInstanceRepository.CreateWorkflowInstance(workflowInstance);
             WorkflowInstanceResponseDto workflowInstanceResponseDto = _mapper.Map<WorkflowInstanceResponseDto>(workflowCreated);

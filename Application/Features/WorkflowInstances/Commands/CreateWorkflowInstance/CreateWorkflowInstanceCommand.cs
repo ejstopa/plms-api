@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Domain.Results;
 using MediatR;
 
-namespace Application.Features.WorkflowInstances.CreateWorkflowInstance
+namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
 {
     public class CreateWorkflowInstanceCommand : IRequest<Result<WorkflowInstanceResponseDto>>
     {

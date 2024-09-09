@@ -21,12 +21,18 @@ namespace Infrastructure.Data.Repositories
     {
         private readonly string _connectionString;
         private readonly IUserWorkspaceFIlesService _userWorkspaceFIlesService;
+        private readonly IUserWorkflowFilesService _userWorkflowFilesService;
         private readonly IModelRevisionService _modelRevisionService;
 
-        public ItemRepository(IConfiguration configuration, IUserWorkspaceFIlesService userWorkspaceFIlesService, IModelRevisionService modelRevisionService)
+        public ItemRepository(
+            IConfiguration configuration,
+            IUserWorkspaceFIlesService userWorkspaceFIlesService,
+            IUserWorkflowFilesService userWorkflowFilesService,
+            IModelRevisionService modelRevisionService)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _userWorkspaceFIlesService = userWorkspaceFIlesService;
+            _userWorkflowFilesService = userWorkflowFilesService;
             _modelRevisionService = modelRevisionService;
         }
 
@@ -40,14 +46,13 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
-
         public async Task<Item?> GetItemByName(string itemName)
         {
             using (SqlConnection connection = new(_connectionString))
             {
                 string sql = "SELECT * FROM Items WHERE Name = @itemName";
 
-                return await connection.QueryFirstOrDefaultAsync<Item>(sql, new {itemName});
+                return await connection.QueryFirstOrDefaultAsync<Item>(sql, new { itemName });
             }
         }
 
@@ -147,6 +152,15 @@ namespace Infrastructure.Data.Repositories
                 item.Status = ItemStatus.checkedOut.ToString();
             });
             List<Model> checkedOutItemsModels = [.. (await GetItemsModels(checkedOutItems)).OrderBy(model => model.Type != ".drw" ? 0 : 1)];
+
+            string workspaceDirectory = _userWorkspaceFIlesService.GetUserWorkspaceDirectory(user);
+
+            checkedOutItemsModels.ForEach(model =>
+            {
+                string libraryDirectory = model.FilePath[..model.FilePath.LastIndexOf('\\')];
+                model.FilePath = model.FilePath.Replace(libraryDirectory, workspaceDirectory);
+            });
+
             List<Item> checkedOutItemsWithModels = AddItemsModels(checkedOutItems, checkedOutItemsModels);
 
             return [.. checkedOutItemsWithModels.OrderBy(item => item.Name)];
@@ -222,5 +236,18 @@ namespace Infrastructure.Data.Repositories
             return itemsWithModels;
         }
 
+        public async Task<Item?> SetItemStatus(int itemId, ItemStatus itemStatus)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = @"UPDATE Items 
+                            SET Status = @itemStatus 
+                            WHERE Id = @itemId
+                            SELECT CAST(SCOPE_IDENTITY() as INT)";
+                int id = await connection.ExecuteScalarAsync<int>(sql, new { itemId, itemStatus = itemStatus.ToString() });
+
+                return await connection.QueryFirstAsync<Item>("SELECT * FROM Items WHERE Id = @id", new{id});
+            }
+        }
     }
 }

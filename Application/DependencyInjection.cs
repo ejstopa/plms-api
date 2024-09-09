@@ -1,6 +1,6 @@
 
 using System.Reflection;
-using Application.Features.WorkflowInstances.CreateWorkflowInstance;
+using Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance;
 using Application.Mapping;
 using FluentValidation;
 using MediatR;

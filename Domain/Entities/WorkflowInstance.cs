@@ -14,5 +14,7 @@ namespace Domain.Entities
         public int? PreviousStepId { get; set; }
         public string Status { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
+        public int? ItemFamilyId {get; set;}
+        public Item? Item {get; set;}
     }
 }
