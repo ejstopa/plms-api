@@ -19,6 +19,7 @@ namespace Application.Mapping
     {
         public AutoMapperProfile()
         {
+            CreateMap<User, UserResponseDto>();
             CreateMap<Model, ModelResponseDto>();
             CreateMap<UserFile, UserWorkspaceFileResponse>();
             CreateMap<LibraryDirectory, LibraryDirectoryResponse>();

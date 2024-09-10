@@ -3,6 +3,7 @@ using Application.Abstractions.Repositories;
 using Application.Features.models;
 using AutoMapper;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Errors;
 using Domain.Results;
 using MediatR;
@@ -34,6 +35,7 @@ namespace Application.Features.Items.Commands.CreateItemReservation
             Item? item = await _itemRepository.GetItemById(request.ItemId);
             if (item is null) return Result<List<ModelResponseDto>>.Failure(new Error(400, "O item não foi encontrado"));
             if (item.CheckedOutBy != 0) return Result<List<ModelResponseDto>>.Failure(new Error(401, "O item já está reservado"));
+            if (item.Status == ItemStatus.inWorkflow.ToString()) return Result<List<ModelResponseDto>>.Failure(new Error(401, "O item está em fluxo de liberação e não pode ser reservado"));
 
             List<Model> models = await _modelRepository.GetLatestModelsByItem(request.ItemId);
             if (models.Count == 0) return Result<List<ModelResponseDto>>.Failure(new Error(409, "Não existem arquivos relacionados a esse item"));

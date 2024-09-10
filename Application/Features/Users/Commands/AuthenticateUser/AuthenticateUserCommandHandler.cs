@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Application.Abstractions.Repositories;
+using AutoMapper;
 using Domain.Entities;
 using MediatR;
 
@@ -10,10 +11,12 @@ namespace Application.Features.Users.Commands.AuthenticateUser
 {
     public class AuthenticateUserCommandHandler : IRequestHandler<AuthenticateUserCommand, UserResponseDto?>
     {
+        private readonly IMapper _mapper;
         private readonly IUserRepository _userRepository;
 
-        public AuthenticateUserCommandHandler(IUserRepository userRepository)
+        public AuthenticateUserCommandHandler(IMapper mapper, IUserRepository userRepository)
         {
+            _mapper = mapper;
             _userRepository = userRepository;
         }
 
@@ -26,7 +29,7 @@ namespace Application.Features.Users.Commands.AuthenticateUser
                 return null;
             }
             
-            return await Task.FromResult(new UserResponseDto(user));
+            return await Task.FromResult(_mapper.Map<UserResponseDto>(user));
         }
     }
 }

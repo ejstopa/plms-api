@@ -13,6 +13,7 @@ namespace Domain.Entities
         public string WindowsUser {get; set;} = string.Empty;
         public int RoleId{get; set;}
         public bool IsActive{get; set;}
+        public UserRole? UserRole {get; set;}
 
     }
 }

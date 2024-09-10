@@ -38,14 +38,20 @@ namespace Api.Endpoints
 
             app.MapGet("workflow-instances/{workflowId}/steps", async (ISender sender, int workflowId) =>
             {
-                List<WorkflowStepResponseDto> steps = await sender.Send(new GetWorkFlowIstanceStepsQuery{WorkflowInsanceId = workflowId});
+                List<WorkflowStepResponseDto> steps = await sender.Send(new GetWorkFlowIstanceStepsQuery { WorkflowInsanceId = workflowId });
 
-                if (steps is null){
+                if (steps is null)
+                {
                     Results.Conflict("Ocorreu um erro ao tentar carregar as etapas do workflow");
                 }
 
                 return Results.Ok(steps);
             }).WithName("GetWorkFlowIstanceSteps");
+
+            app.MapPut("workflow-instances/{workflowId}/steps", (ISender sender, int workflowId ) =>
+            {
+
+            });
 
 
 

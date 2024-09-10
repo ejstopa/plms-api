@@ -8,19 +8,8 @@ namespace Application.Features.Users
         public string Name { get; set; } = string.Empty;
         public string WindowsUser { get; set; } = string.Empty;
         public int RoleId { get; set; }
-
-        public UserResponseDto()
-        {
-
-        }
-
-        public UserResponseDto(User user)
-        {
-            Id = user.Id;
-            Name = user.Name;
-            WindowsUser = user.WindowsUser;
-            RoleId = user.RoleId;
-        }
+        public bool IsActive { get; set; }
+        public UserRole? UserRole { get; set; }
 
     }
 }

@@ -32,7 +32,7 @@ namespace Infrastructure.Data.Repositories
                 string sql = @"INSERT INTO WorkflowInstances VALUES(
                     @WorkflowTemplateId, @ItemId, @ItemName, @ItemRevision, 
                     @UserId, @CurrentStepId, @PreviousStepId, @Status,
-                    @Message);
+                    @Message, @ItemFamilyId);
                     SELECT CAST(SCOPE_IDENTITY() as INT)";
 
                 int id = await connection.ExecuteScalarAsync<int>(sql, workflowInstance);

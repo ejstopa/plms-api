@@ -20,6 +20,7 @@ namespace Infrastructure
             services.AddScoped<IItemNameReservationRepository, ItemNameReservationRepository>();
             services.AddScoped<IItemFamilyRepository, ItemFamilyRepository>();
             services.AddScoped<IWorkflowInstanceRepository, WorkflowInstanceRepository>();
+            services.AddScoped<IWorkflowTemplateRepository, WorkflowTemplateRepository>();
 
             services.AddScoped<IUserWorkspaceFIlesService, UserWorkspaceFilesService>();
             services.AddScoped<ILibraryFilesService, LibraryFilesService>();

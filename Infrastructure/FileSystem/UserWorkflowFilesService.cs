@@ -70,7 +70,7 @@ namespace Infrastructure.FileSystem
             {
                 File.Move(filePath, newFilePath);
             }
-            catch (Exception e)
+            catch
             {
                 throw new Exception($"Ocorreu um erro ao tentar mover o arquivo: '{filePath}' para o diretório de workflows");
             }

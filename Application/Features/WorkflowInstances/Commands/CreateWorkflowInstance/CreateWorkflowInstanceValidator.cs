@@ -12,12 +12,18 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
         private readonly IUserRepository _userRepository;
         private readonly IItemRepository _itemRepository;
         private readonly IItemNameReservationRepository _itemNameReservationRepository;
+        private readonly IItemFamilyRepository _itemFamilyRepository;
 
-        public CreateWorkflowInstanceValidator(IUserRepository userRepository, IItemRepository itemRepository, IItemNameReservationRepository itemNameReservationRepository)
+        public CreateWorkflowInstanceValidator(
+            IUserRepository userRepository,
+            IItemRepository itemRepository,
+            IItemNameReservationRepository itemNameReservationRepository,
+            IItemFamilyRepository itemFamilyRepository)
         {
             _userRepository = userRepository;
             _itemRepository = itemRepository;
             _itemNameReservationRepository = itemNameReservationRepository;
+            _itemFamilyRepository = itemFamilyRepository;
         }
 
         public async Task<Result<bool>> Validate(CreateWorkflowInstanceCommand request)
@@ -88,7 +94,18 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
                 {
                     return Result<bool>.Failure(new Error(401, "O código desse item foi reservado por outro usuário"));
                 }
+            }
 
+            if (request.ItemName.Length < 8)
+            {
+                return Result<bool>.Failure(new Error(400, "O código do item não atende o requisito de comprimento mínimo"));
+            }
+
+            ItemFamily? itemFamily = await _itemFamilyRepository.GetItemFamilyByName(request.ItemName[..4]);
+
+            if (itemFamily == null)
+            {
+                return Result<bool>.Failure(new Error(400, "A família do item não está cadastrada"));
             }
 
             return Result<bool>.Success(true);
@@ -103,6 +120,8 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
 
             return true;
         }
+
+
 
     }
 }

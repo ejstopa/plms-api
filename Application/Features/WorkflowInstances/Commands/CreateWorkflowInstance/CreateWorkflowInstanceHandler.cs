@@ -21,6 +21,8 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
         private readonly IModelRevisionService _modelRevisionService;
         private readonly IUserWorkspaceFIlesService _userWorkspaceFIlesService;
         private readonly IUserWorkflowFilesService _userWorkflowFilesService;
+        private readonly IItemFamilyRepository _itemFamilyRepository;
+        private readonly IWorkflowTemplateRepository _workflowTemplateRepository;
 
         public CreateWorkflowInstanceHandler(
             IMapper mapper,
@@ -30,7 +32,9 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
             IWorkflowInstanceRepository workflowInstanceRepository,
             IModelRevisionService modelRevisionService,
             IUserWorkspaceFIlesService userWorkspaceFIlesService,
-            IUserWorkflowFilesService userWorkflowFilesService)
+            IUserWorkflowFilesService userWorkflowFilesService, 
+            IItemFamilyRepository itemFamilyRepository, 
+            IWorkflowTemplateRepository workflowTemplateRepository)
         {
             _mapper = mapper;
             _validator = validator;
@@ -40,6 +44,8 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
             _modelRevisionService = modelRevisionService;
             _userWorkspaceFIlesService = userWorkspaceFIlesService;
             _userWorkflowFilesService = userWorkflowFilesService;
+            _itemFamilyRepository = itemFamilyRepository;
+            _workflowTemplateRepository = workflowTemplateRepository;
         }
         public async Task<Result<WorkflowInstanceResponseDto>> Handle(CreateWorkflowInstanceCommand request, CancellationToken cancellationToken)
         {
@@ -52,6 +58,8 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
             }
 
             int workflowTemplateId = 2;
+            
+            List<WorkFlowStep> workFlowSteps = await _workflowTemplateRepository.GetWorkflowTemplateSteps(workflowTemplateId);
 
             Item? item = await _itemRepository.GetItemByName(request.ItemName);
 
@@ -59,6 +67,8 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
             {
                 Item? itemUpdated = await _itemRepository.SetItemStatus(item.Id, ItemStatus.inWorkflow);
             }
+
+            ItemFamily? itemFamily = await _itemFamilyRepository.GetItemFamilyByName(request.ItemName[..4]);
 
             WorkflowInstance workflowInstance = new()
             {
@@ -68,10 +78,11 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
                 ItemName = request.ItemName,
                 ItemRevision = item != null ? _modelRevisionService.IncrementRevision(item.LastRevision) : "-",
                 UserId = request.UserId,
-                CurrentStepId = 1,
+                CurrentStepId = workFlowSteps[0].Id,
                 PreviousStepId = null,
                 Status = WorkflowStatus.InWork.ToString(),
-                Message = ""
+                Message = "",
+                ItemFamilyId = itemFamily!.Id
             };
 
             User? user = await _userRepository.GetUserById(request.UserId);
