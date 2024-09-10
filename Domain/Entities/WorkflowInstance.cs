@@ -16,5 +16,6 @@ namespace Domain.Entities
         public string Message { get; set; } = string.Empty;
         public int? ItemFamilyId {get; set;}
         public Item? Item {get; set;}
+        public List<WorkFlowStep> WorkFlowSteps {get; set;} = [];
     }
 }

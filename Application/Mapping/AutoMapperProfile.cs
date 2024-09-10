@@ -26,6 +26,7 @@ namespace Application.Mapping
             CreateMap<ItemNameReservation, ItemNameReservationResponseDto>();
             CreateMap<ItemFamily, ItemFamilyResponseDto>();
             CreateMap<WorkflowInstance, WorkflowInstanceResponseDto>();
+            CreateMap<WorkFlowStep, WorkflowStepResponseDto>();
         }
     }
 }

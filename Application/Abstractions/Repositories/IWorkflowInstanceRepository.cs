@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Application.Features.WorkflowInstances;
 using Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance;
 using Domain.Entities;
 
@@ -11,5 +12,6 @@ namespace Application.Abstractions.Repositories
     {
         public Task<WorkflowInstance> CreateWorkflowInstance(WorkflowInstance workflowInstance);
         public Task<List<WorkflowInstance>> GetWorkflowsByUserId(User user);
+        public Task<List<WorkFlowStep>?> GetWorkflowInstancSteps(int workflowInstanceId);
     }
 }

@@ -1,5 +1,6 @@
 using Application.Features.WorkflowInstances;
 using Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance;
+using Application.Features.WorkflowInstances.Queries.GetWorkFlowIstanceSteps;
 using Application.Features.WorkflowInstances.Queries.GetWorkflowsByUser;
 using Domain.Results;
 using MediatR;
@@ -34,6 +35,21 @@ namespace Api.Endpoints
 
                 return Results.Ok(workflowsResult.Value);
             }).WithName("GetWorkflowsByUser");
+
+            app.MapGet("workflow-instances/{workflowId}/steps", async (ISender sender, int workflowId) =>
+            {
+                List<WorkflowStepResponseDto> steps = await sender.Send(new GetWorkFlowIstanceStepsQuery{WorkflowInsanceId = workflowId});
+
+                if (steps is null){
+                    Results.Conflict("Ocorreu um erro ao tentar carregar as etapas do workflow");
+                }
+
+                return Results.Ok(steps);
+            }).WithName("GetWorkFlowIstanceSteps");
+
+
+
+
         }
     }
 }

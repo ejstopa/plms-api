@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Application.Abstractions.FileSystem;
 using Application.Abstractions.Repositories;
+using Application.Features.WorkflowInstances;
 using Dapper;
 using Domain.Entities;
 using Domain.Enums;
@@ -50,6 +51,55 @@ namespace Infrastructure.Data.Repositories
                 AddWorkflowsItemsWithModels(workflows.ToList(), user);
 
                 return workflows.ToList();
+            }
+        }
+
+        public async Task<List<WorkFlowStep>?> GetWorkflowInstancSteps(int workflowInstanceId)
+        {
+            
+            using (SqlConnection connection = new(_connectionString))
+            {
+                connection.Open();
+
+                string getWorkflowStepsSql =
+                @"SELECT WorkflowSteps.*, WorkflowTemplates_WorkflowSteps.StepOrder
+                FROM WorkflowSteps LEFT JOIN WorkflowTemplates_WorkflowSteps 
+                ON WorkflowTemplates_WorkflowSteps.WorkflowStepId = WorkflowSteps.Id 
+                WHERE WorkflowTemplates_WorkflowSteps.WorkflowTemplateId = (
+                	SELECT WorkflowTemplates.Id 
+                	FROM WorkflowInstances LEFT JOIN WorkflowTemplates 
+                	ON WorkflowTemplates.Id = WorkflowInstances.WorkflowTemplateId 
+                	WHERE WorkflowInstances.Id = @workflowInstanceId)";
+
+                IEnumerable<WorkFlowStep> steps = await connection.QueryAsync<WorkFlowStep>(getWorkflowStepsSql, new { workflowInstanceId });
+
+                foreach (WorkFlowStep step in steps){
+
+                    string getAttributesSql =
+                    @"SELECT * 
+                    FROM ItemAttributes 
+                    WHERE Id IN(
+                	SELECT DISTINCT WorkflowSteps_ItemAttributes.ItemAttributeId 
+                	FROM WorkflowSteps_ItemAttributes 
+                	WHERE WorkflowStepId = @stepId)";
+
+                    IEnumerable<ItemAttribute> attributes = await connection.QueryAsync<ItemAttribute>(getAttributesSql, new { stepId = step.Id });
+                    List<int> attributesIds = attributes.Select(attribute => attribute.Id).ToList();
+
+                    string getAttributeOptionsSql = "SELECT * FROM ItemAttributeOptions WHERE ItemAttributeId IN @attributesIds";
+                    IEnumerable<ItemAttributeOption> options = await connection.QueryAsync<ItemAttributeOption>(
+                        getAttributeOptionsSql, new { attributesIds });
+
+                    attributes.ToList().ForEach(attribute =>
+                    {
+                        List<ItemAttributeOption> attributeOptions = options.Where(option => option.ItemAttributeId == attribute.Id).ToList();
+                        attribute.options = attributeOptions;
+                    });
+
+                    step.ItemAttributes = attributes.ToList();
+                }
+      
+                return steps.ToList();
             }
         }
 

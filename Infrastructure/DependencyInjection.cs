@@ -16,14 +16,16 @@ namespace Infrastructure
         {
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IModelRepository, ModelRepository>();
-            services.AddScoped<IUserWorkspaceFIlesService, UserWorkspaceFilesService>();
-            services.AddScoped<ILibraryFilesService, LibraryFilesService>();
-            services.AddScoped<IFileRevisionService, FileRevisionService>();
             services.AddScoped<IItemRepository, ItemRepository>();
             services.AddScoped<IItemNameReservationRepository, ItemNameReservationRepository>();
             services.AddScoped<IItemFamilyRepository, ItemFamilyRepository>();
             services.AddScoped<IWorkflowInstanceRepository, WorkflowInstanceRepository>();
+
+            services.AddScoped<IUserWorkspaceFIlesService, UserWorkspaceFilesService>();
+            services.AddScoped<ILibraryFilesService, LibraryFilesService>();
+            services.AddScoped<IFileRevisionService, FileRevisionService>();
             services.AddScoped<IUserWorkflowFilesService, UserWorkflowFilesService>();
+
         }
     }
 }

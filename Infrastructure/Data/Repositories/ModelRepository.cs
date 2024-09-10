@@ -8,7 +8,7 @@ namespace Infrastructure.Data.Repositories
 {
     public class ModelRepository : IModelRepository
     {
-        readonly string connectionString;
+        private readonly string connectionString;
 
         public ModelRepository(IConfiguration configuration)
         {
