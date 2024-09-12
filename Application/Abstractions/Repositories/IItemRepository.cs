@@ -16,6 +16,5 @@ namespace Application.Abstractions.Repositories
         public Task<List<Item>> GetItemsByUserWorkspace(User user);
         public Task<bool> ToggleItemCheckout(int itemId, int userId, bool checkedOut);
         public Task<Item?> SetItemStatus(int itemId, ItemStatus itemStatus);
-        
     }
 }

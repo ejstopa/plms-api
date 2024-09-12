@@ -38,7 +38,7 @@ namespace Infrastructure.FileSystem
             return workspaceDir;
         }
 
-        public  List<UserFile> GetUserUserWorkspaceFiles(User user, List<string>? filterExtensions = null)
+        public List<UserFile> GetUserUserWorkspaceFiles(User user, List<string>? filterExtensions = null)
         {
             string userWorkspaceDir = GetUserWorkspaceDirectory(user);
             List<string> workspaceFilePaths = Directory.GetFiles(userWorkspaceDir).ToList();
@@ -51,20 +51,31 @@ namespace Infrastructure.FileSystem
                 string fileExtensionWithVersion = fileNameWithExtension[fileNameWithExtension.IndexOf('.')..];
 
                 string fileName = fileNameWithExtension[..fileNameWithExtension.IndexOf('.')];
-                string fileExtension = fileExtensionWithVersion[1 ..].Contains('.')? 
-                fileExtensionWithVersion[.. fileExtensionWithVersion.LastIndexOf('.')] :
+                string fileExtension = fileExtensionWithVersion[1..].Contains('.') ?
+                fileExtensionWithVersion[..fileExtensionWithVersion.LastIndexOf('.')] :
                 fileExtensionWithVersion;
 
-                if (filterExtensions != null && filterExtensions.Contains(fileExtension))
-                userFiles.Add(new UserFile()
+                string fileVersion = fileExtensionWithVersion[1..].Contains('.') ?
+                fileExtensionWithVersion[fileExtensionWithVersion.LastIndexOf('.')..] : "";
+
+                UserFile userfile = new()
                 {
                     Name = fileName,
                     Extension = fileExtension,
-                    FullPath = filePath,
+                    FullPath = filePath.Replace(fileVersion, ""),
                     LastModifiedAt = File.GetLastWriteTime(filePath),
-                });
+                };
+
+                if (filterExtensions != null && filterExtensions.Contains(fileExtension))
+                {
+                    if (!userFiles.Where(file => file.Name == userfile.Name && file.Extension == userfile.Extension).Any())
+                    {
+                        userFiles.Add(userfile);
+                    }
+                }
+
             }
-            
+
             return userFiles;
         }
 
@@ -79,7 +90,7 @@ namespace Infrastructure.FileSystem
                 throw;
             }
 
-           return true;
+            return true;
         }
 
     }

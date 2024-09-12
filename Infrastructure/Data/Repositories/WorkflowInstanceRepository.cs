@@ -56,7 +56,7 @@ namespace Infrastructure.Data.Repositories
 
         public async Task<List<WorkFlowStep>?> GetWorkflowInstancSteps(int workflowInstanceId)
         {
-            
+
             using (SqlConnection connection = new(_connectionString))
             {
                 connection.Open();
@@ -73,7 +73,8 @@ namespace Infrastructure.Data.Repositories
 
                 IEnumerable<WorkFlowStep> steps = await connection.QueryAsync<WorkFlowStep>(getWorkflowStepsSql, new { workflowInstanceId });
 
-                foreach (WorkFlowStep step in steps){
+                foreach (WorkFlowStep step in steps)
+                {
 
                     string getAttributesSql =
                     @"SELECT * 
@@ -98,7 +99,7 @@ namespace Infrastructure.Data.Repositories
 
                     step.ItemAttributes = attributes.ToList();
                 }
-      
+
                 return steps.ToList();
             }
         }
@@ -140,6 +141,57 @@ namespace Infrastructure.Data.Repositories
                 workflow.Item = item;
             }
 
+        }
+
+        public async Task<WorkflowInstance?> UpdateWorkflowStep(int workflowInstanceId, int newStepId, int previousStepId)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql =
+                @"UPDATE WorkflowInstances 
+                SET CurrentStepId = @newStepId, PreviousStepId = @previousStepId 
+                WHERE Id = @workflowInstanceId";
+
+                await connection.ExecuteAsync(sql, new { newStepId, previousStepId, workflowInstanceId });
+
+                return await connection.QueryFirstAsync<WorkflowInstance>(
+                    "SELECT * FROM WorkflowInstances WHERE Id = @workflowInstanceId", new { workflowInstanceId });
+
+            }
+        }
+
+        public async Task<WorkflowInstance?> GetWorkflowInstanceById(int workflowInstanceId)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = "SELECT * FROM WorkflowInstances WHERE Id = @workflowInstanceId";
+
+                return await connection.QueryFirstOrDefaultAsync<WorkflowInstance>(sql, new { workflowInstanceId });
+            }
+        }
+
+        public async Task<List<WorkflowInstance>> GetWorkflowInstanceByStepIds(List<int> stepIds )
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = "SELECT * FROM WorkflowInstances WHERE CurrentStepId IN @stepIdS";
+
+                IEnumerable<WorkflowInstance> workflowInstances = await connection.QueryAsync<WorkflowInstance>(sql, new { stepIds });
+
+                return workflowInstances.ToList();
+            }
+        }
+
+        public async Task<List<WorkFlowStep>?> GetWorkflowIStepsByDepartmentId(int departmentId)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = "SELECT * FROM WorkflowSteps WHERE DepartmentId = @departmentId";
+
+                 IEnumerable<WorkFlowStep> steps = await connection.QueryAsync<WorkFlowStep>(sql, new { departmentId });
+
+                 return steps.ToList();
+            }
         }
     }
 

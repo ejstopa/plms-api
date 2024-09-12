@@ -1,19 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Threading.Tasks;
 using Application.Abstractions.FileSystem;
 using Application.Abstractions.Repositories;
-using Application.Features.Users.Queries.GetUserWorkspaceFiles;
 using Dapper;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Services;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Data.Repositories
 {
@@ -246,8 +238,10 @@ namespace Infrastructure.Data.Repositories
                             SELECT CAST(SCOPE_IDENTITY() as INT)";
                 int id = await connection.ExecuteScalarAsync<int>(sql, new { itemId, itemStatus = itemStatus.ToString() });
 
-                return await connection.QueryFirstAsync<Item>("SELECT * FROM Items WHERE Id = @id", new{id});
+                return await connection.QueryFirstAsync<Item>("SELECT * FROM Items WHERE Id = @id", new { id });
             }
         }
+
+       
     }
 }

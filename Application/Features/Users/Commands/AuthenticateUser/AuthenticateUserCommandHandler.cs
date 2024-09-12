@@ -24,7 +24,7 @@ namespace Application.Features.Users.Commands.AuthenticateUser
         {        
             User? user = await _userRepository.GetUserByName(request.Name);
 
-            if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            if (user is null || request.Password != user.Password)
             {
                 return null;
             }
