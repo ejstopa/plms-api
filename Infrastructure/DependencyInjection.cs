@@ -29,6 +29,7 @@ namespace Infrastructure
             services.AddScoped<ILibraryFilesService, LibraryFilesService>();
             services.AddScoped<IFileRevisionService, FileRevisionService>();
             services.AddScoped<IUserWorkflowFilesService, UserWorkflowFilesService>();
+            services.AddScoped<IFileManagementService, FileManagementService>();
 
         }
     }

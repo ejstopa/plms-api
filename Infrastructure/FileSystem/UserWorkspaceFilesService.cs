@@ -2,9 +2,7 @@
 using Application.Abstractions.FileSystem;
 using Application.Abstractions.Repositories;
 using Domain.Entities;
-using Domain.Enums;
 using Domain.Services;
-using Infrastructure.Data.Repositories;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.FileSystem
@@ -47,26 +45,9 @@ namespace Infrastructure.FileSystem
 
             foreach (string filePath in workspaceFilePaths)
             {
-                string fileNameWithExtension = filePath[(filePath.LastIndexOf('\\') + 1)..];
-                string fileExtensionWithVersion = fileNameWithExtension[fileNameWithExtension.IndexOf('.')..];
+                UserFile userfile = new(filePath);
 
-                string fileName = fileNameWithExtension[..fileNameWithExtension.IndexOf('.')];
-                string fileExtension = fileExtensionWithVersion[1..].Contains('.') ?
-                fileExtensionWithVersion[..fileExtensionWithVersion.LastIndexOf('.')] :
-                fileExtensionWithVersion;
-
-                string fileVersion = fileExtensionWithVersion[1..].Contains('.') ?
-                fileExtensionWithVersion[fileExtensionWithVersion.LastIndexOf('.')..] : "";
-
-                UserFile userfile = new()
-                {
-                    Name = fileName,
-                    Extension = fileExtension,
-                    FullPath = filePath.Replace(fileVersion, ""),
-                    LastModifiedAt = File.GetLastWriteTime(filePath),
-                };
-
-                if (filterExtensions != null && filterExtensions.Contains(fileExtension))
+                if (filterExtensions != null && filterExtensions.Contains(userfile.Extension))
                 {
                     if (!userFiles.Where(file => file.Name == userfile.Name && file.Extension == userfile.Extension).Any())
                     {

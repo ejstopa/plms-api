@@ -19,13 +19,13 @@ namespace Infrastructure.Data.Repositories
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
 
-        public async Task<ItemAtribute?> GetItemAtribute(int attributeId)
+        public async Task<ItemAttribute?> GetItemAtribute(int attributeId)
         {
             using (SqlConnection connection = new(_connectionString))
             {
                 string sql = "SELECT * FROM ItemAttributes WHERE Id = @attributeId";
 
-                return await connection.QueryFirstOrDefaultAsync<ItemAtribute>(sql, new {attributeId});
+                return await connection.QueryFirstOrDefaultAsync<ItemAttribute>(sql, new {attributeId});
             }
         }
     }

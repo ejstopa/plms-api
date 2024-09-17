@@ -42,7 +42,7 @@ namespace Application.Features.WorkflowInstances.Queries.GetWorkflowsByUser
                 return Result<List<WorkflowInstanceResponseDto>>.Failure(new Error(400, "Usuário não encontrado"));
             }
 
-            List<WorkflowInstance> workflows = await _workflowInstanceRepository.GetWorkflowsByUserId(user);
+            List<WorkflowInstance> workflows = await _workflowInstanceRepository.GetWorkflowsByUserId(user, true);
 
             List<WorkflowInstanceResponseDto> workflowInstanceResponseDtos = _mapper.Map<List<WorkflowInstanceResponseDto>>(workflows);
 

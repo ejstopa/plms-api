@@ -61,11 +61,11 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
             
             List<WorkFlowStep> workFlowSteps = await _workflowTemplateRepository.GetWorkflowTemplateSteps(workflowTemplateId);
 
-            Item? item = await _itemRepository.GetItemByName(request.ItemName);
+            Item? item = await _itemRepository.GetLatestItemByName(request.ItemName);
 
-            if (item != null)
+            if (item != null && item.Id != null)
             {
-                Item? itemUpdated = await _itemRepository.SetItemStatus(item.Id, ItemStatus.inWorkflow);
+                Item? itemUpdated = await _itemRepository.SetItemStatus((int)item.Id, ItemStatus.inWorkflow);
             }
 
             ItemFamily? itemFamily = await _itemFamilyRepository.GetItemFamilyByName(request.ItemName[..4]);
@@ -76,7 +76,7 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
                 WorkflowTemplateId = workflowTemplateId,
                 ItemId = item != null ? item.Id : null,
                 ItemName = request.ItemName,
-                ItemRevision = item != null ? _modelRevisionService.IncrementRevision(item.LastRevision) : "-",
+                ItemRevision = item != null ? _modelRevisionService.IncrementRevision(item.Revision) : "-",
                 UserId = request.UserId,
                 CurrentStepId = workFlowSteps[0].Id,
                 PreviousStepId = null,

@@ -34,7 +34,7 @@ namespace Application.Features.Items.Commands.CreateItemReservation
          
             Item? item = await _itemRepository.GetItemById(request.ItemId);
             if (item is null) return Result<List<ModelResponseDto>>.Failure(new Error(400, "O item não foi encontrado"));
-            if (item.CheckedOutBy != 0) return Result<List<ModelResponseDto>>.Failure(new Error(401, "O item já está reservado"));
+            if (item.CheckedOutBy != 0 && item.CheckedOutBy != null) return Result<List<ModelResponseDto>>.Failure(new Error(401, "O item já está reservado"));
             if (item.Status == ItemStatus.inWorkflow.ToString()) return Result<List<ModelResponseDto>>.Failure(new Error(401, "O item está em fluxo de liberação e não pode ser reservado"));
 
             List<Model> models = await _modelRepository.GetLatestModelsByItem(request.ItemId);
@@ -50,9 +50,10 @@ namespace Application.Features.Items.Commands.CreateItemReservation
                     _fileRevisionService.CreateFileRevision($"{model.FilePath}.{model.Version}", user);
                 }
             }
-            catch
+            catch (Exception e)
             {
-                return Result<List<ModelResponseDto>>.Failure(new Error(409, "Ocorreu um erro ao tentar copiar os arquivos para a workspace"));
+                return Result<List<ModelResponseDto>>.Failure(new Error(409, e.Message));
+                // return Result<List<ModelResponseDto>>.Failure(new Error(409, "Ocorreu um erro ao tentar copiar os arquivos para a workspace"));
             }
 
             List<ModelResponseDto> modelResponseDtos = _mapper.Map<List<ModelResponseDto>>(models);

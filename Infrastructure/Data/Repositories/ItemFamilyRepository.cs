@@ -35,5 +35,15 @@ namespace Infrastructure.Data.Repositories
                 return await connection.QueryFirstOrDefaultAsync<ItemFamily>(sql, new { familyName });
             }
         }
+
+        public async Task<ItemFamily?> GetItemFamilyById(int familyId)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = "SELECT * FROM ItemFamilies WHERE Id = @familyId";
+
+                return await connection.QueryFirstOrDefaultAsync<ItemFamily>(sql, new { familyId });
+            }
+        }
     }
 }

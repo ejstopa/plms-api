@@ -38,22 +38,16 @@ namespace Infrastructure.FileSystem
 
             foreach (string filePath in workflowsFilePaths)
             {
-                string fileNameWithExtension = filePath[(filePath.LastIndexOf('\\') + 1)..];
-                string fileExtensionWithVersion = fileNameWithExtension[fileNameWithExtension.IndexOf('.')..];
+                UserFile userfile = new(filePath);
 
-                string fileName = fileNameWithExtension[..fileNameWithExtension.IndexOf('.')];
-                string fileExtension = fileExtensionWithVersion[1..].Contains('.') ?
-                fileExtensionWithVersion[..fileExtensionWithVersion.LastIndexOf('.')] :
-                fileExtensionWithVersion;
-
-                if (filterExtensions != null && filterExtensions.Contains(fileExtension))
-                    userFiles.Add(new UserFile()
+                if (filterExtensions != null && filterExtensions.Contains(userfile.Extension))
+                {
+                    if (!userFiles.Where(file => file.Name == userfile.Name && file.Extension == userfile.Extension).Any())
                     {
-                        Name = fileName,
-                        Extension = fileExtension,
-                        FullPath = filePath,
-                        LastModifiedAt = File.GetLastWriteTime(filePath),
-                    });
+                        userFiles.Add(userfile);
+                    }
+                }
+
             }
 
             return userFiles;
@@ -63,8 +57,9 @@ namespace Infrastructure.FileSystem
         {
             string userWorkflowsDirectory = GetUserWorkflowsDirectory(user);
 
-            string fileName = filePath[(filePath.LastIndexOf('\\') + 1)..];
-            string newFilePath = $"{userWorkflowsDirectory}/{fileName}";
+            UserFile userfile = new (filePath);
+
+            string newFilePath = $"{userWorkflowsDirectory}/{userfile.Name}{userfile.Extension}";
 
             try
             {
@@ -76,5 +71,7 @@ namespace Infrastructure.FileSystem
             }
 
         }
+
+
     }
 }

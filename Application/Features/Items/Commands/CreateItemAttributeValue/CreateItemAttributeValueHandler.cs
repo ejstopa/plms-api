@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 using Application.Abstractions.Repositories;
 using Domain.Entities;
 using Domain.Enums;
@@ -25,7 +20,7 @@ namespace Application.Features.Items.Commands.CreateItemAttributeValue
 
         public async Task<Result<ItemAttributeValue?>> Handle(CreateItemAttributeValueCommand request, CancellationToken cancellationToken)
         {
-            ItemAtribute? atribute = await _itemAtributeRepository.GetItemAtribute(request.AttributeId);
+            ItemAttribute? atribute = await _itemAtributeRepository.GetItemAtribute(request.AttributeId);
 
             if (atribute is null)
             {
@@ -44,7 +39,7 @@ namespace Application.Features.Items.Commands.CreateItemAttributeValue
             }
         }
 
-        private async Task<Result<ItemAttributeValue?>> CreateAttributeValue(CreateItemAttributeValueCommand request, ItemAtribute atribute)
+        private async Task<Result<ItemAttributeValue?>> CreateAttributeValue(CreateItemAttributeValueCommand request, ItemAttribute atribute)
         {
             ItemAttributeValue? newAttributeValue;
 
@@ -72,7 +67,7 @@ namespace Application.Features.Items.Commands.CreateItemAttributeValue
             return Result<ItemAttributeValue?>.Success(newAttributeValue);
         }
 
-        private async Task<Result<ItemAttributeValue?>> UpdateAttributeValue(CreateItemAttributeValueCommand request, ItemAtribute atribute)
+        private async Task<Result<ItemAttributeValue?>> UpdateAttributeValue(CreateItemAttributeValueCommand request, ItemAttribute atribute)
         {
             ItemAttributeValue? newAttributeValue;
 

@@ -10,7 +10,8 @@ namespace Application.Abstractions.Repositories
     public interface IItemRepository
     {
         public Task<Item?> GetItemById(int itemId);
-        public Task<Item?> GetItemByName(string itemName);
+        public Task<Item?> CreateItem(Item item);
+        public Task<Item?> GetLatestItemByName(string itemName, bool getModels = false);
         public Task<List<Item>> GetItemsByFamily(string family);
         public Task<List<Item>> GetUserCheckedOutItems(int userId);
         public Task<List<Item>> GetItemsByUserWorkspace(User user);

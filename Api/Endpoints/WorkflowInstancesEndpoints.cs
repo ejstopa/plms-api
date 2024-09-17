@@ -5,7 +5,7 @@ using Application.Features.WorkflowInstances.Commands.IncrementWorkflowStep;
 using Application.Features.WorkflowInstances.Queries.GetWorkflowInstanceValue;
 using Application.Features.WorkflowInstances.Queries.GetWorkFlowIstanceSteps;
 using Application.Features.WorkflowInstances.Queries.GetWorkflowsByUser;
-using Application.Features.WorkflowInstances.Queries.GetWorkflowsTasksByUser;
+using Application.Features.WorkflowInstances.Queries.GetWorkflowInstancesByDepartment;
 using Domain.Entities;
 using Domain.Results;
 using MediatR;
@@ -44,7 +44,7 @@ namespace Api.Endpoints
 
             app.MapGet("departments/{departmentId}/workflow-Tasks", async (ISender sender, int departmentId) =>
             {
-                Result<List<WorkflowInstanceResponseDto>> workflowsResult = await sender.Send(new GetWorkflowsTasksByUserQuery { DepartmentId = departmentId });
+                Result<List<WorkflowInstanceResponseDto>> workflowsResult = await sender.Send(new GetWorkflowInstancesByDepartmentQuery { DepartmentId = departmentId });
 
                 if (!workflowsResult.IsSuccess)
                 {
@@ -52,7 +52,7 @@ namespace Api.Endpoints
                 }
 
                 return Results.Ok(workflowsResult.Value);
-            }).WithName("GetWorkflowsTasksByDepartment");
+            }).WithName("GetWorkflowInstancesByDepartment");
 
 
             app.MapGet("workflow-instances/{workflowId}/steps", async (ISender sender, int workflowId) =>

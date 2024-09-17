@@ -69,7 +69,7 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
 
         private async Task<Result<bool>> ValidateItem(CreateWorkflowInstanceCommand request)
         {
-            Item? item = await _itemRepository.GetItemByName(request.ItemName);
+            Item? item = await _itemRepository.GetLatestItemByName(request.ItemName);
 
             if (item != null && item.CheckedOutBy == 0)
             {

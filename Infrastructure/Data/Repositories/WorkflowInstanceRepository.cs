@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Application.Abstractions.FileSystem;
 using Application.Abstractions.Repositories;
@@ -41,14 +42,19 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<List<WorkflowInstance>> GetWorkflowsByUserId(User user)
+        public async Task<List<WorkflowInstance>> GetWorkflowsByUserId(User user, bool onlyActiveWorkflows)
         {
             using (SqlConnection connection = new(_connectionString))
             {
                 string sql = "SELECT * FROM WorkflowInstances WHERE UserId = @userId";
 
+                if (onlyActiveWorkflows)
+                {
+                    sql = $"{sql} AND Status = '{WorkflowStatus.InWork.ToString()}'";
+                }
+
                 IEnumerable<WorkflowInstance> workflows = await connection.QueryAsync<WorkflowInstance>(sql, new { userId = user.Id });
-                AddWorkflowsItemsWithModels(workflows.ToList(), user);
+                await AddWorkflowsItemsWithModels(workflows.ToList(), connection);
 
                 return workflows.ToList();
             }
@@ -104,46 +110,7 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
-        private void AddWorkflowsItemsWithModels(List<WorkflowInstance> workflows, User user)
-        {
-            foreach (WorkflowInstance workflow in workflows)
-            {
-                string userWorkflowsDirectory = _userWorkflowFilesService.GetUserWorkflowsDirectory(user);
-                List<UserFile> userFiles = _userWorkflowFilesService.GetUserUserWorkflowFiles(user, [".prt", ".asm", ".drw"]);
-
-                List<UserFile> workflowFiles = [..
-                userFiles.Where(file => file.Name == workflow.ItemName)
-                .OrderBy(file => file.Extension != ".drw" ? 0 : 1)];
-
-                Item item = new()
-                {
-                    Name = workflow.ItemName,
-                    LastRevision = workflow.ItemRevision,
-                    Status = ItemStatus.inWorkflow.ToString()
-                };
-
-                List<Model> models = [];
-
-                workflowFiles.ForEach(file =>
-                {
-                    Model model = new Model()
-                    {
-                        Name = file.Name,
-                        Type = file.Extension,
-                        Revision = item.LastRevision,
-                        FilePath = file.FullPath,
-                    };
-
-                    models.Add(model);
-                });
-
-                item.Models = models;
-                workflow.Item = item;
-            }
-
-        }
-
-        public async Task<WorkflowInstance?> UpdateWorkflowStep(int workflowInstanceId, int newStepId, int previousStepId)
+        public async Task<WorkflowInstance?> UpdateWorkflowStep(int workflowInstanceId, int? newStepId, int? previousStepId)
         {
             using (SqlConnection connection = new(_connectionString))
             {
@@ -160,25 +127,40 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<WorkflowInstance?> GetWorkflowInstanceById(int workflowInstanceId)
+        public async Task<WorkflowInstance?> GetWorkflowInstanceById(int workflowInstanceId, bool getWorkflowItem = false)
         {
             using (SqlConnection connection = new(_connectionString))
             {
                 string sql = "SELECT * FROM WorkflowInstances WHERE Id = @workflowInstanceId";
 
-                return await connection.QueryFirstOrDefaultAsync<WorkflowInstance>(sql, new { workflowInstanceId });
+                WorkflowInstance? workflowInstance = await connection.QueryFirstOrDefaultAsync<WorkflowInstance>(sql, new { workflowInstanceId });
+
+                if (workflowInstance is null)
+                {
+                    return null;
+                }
+
+                List<WorkflowInstance> workflows = [workflowInstance];
+
+                if (getWorkflowItem)
+                {
+                    await AddWorkflowsItemsWithModels(workflows, connection);
+                }
+
+                return workflows[0];
             }
         }
 
-        public async Task<List<WorkflowInstance>> GetWorkflowInstanceByStepIds(List<int> stepIds )
+        public async Task<List<WorkflowInstance>> GetWorkflowInstanceByStepIds(List<int> stepIds)
         {
             using (SqlConnection connection = new(_connectionString))
             {
                 string sql = "SELECT * FROM WorkflowInstances WHERE CurrentStepId IN @stepIdS";
 
-                IEnumerable<WorkflowInstance> workflowInstances = await connection.QueryAsync<WorkflowInstance>(sql, new { stepIds });
+                IEnumerable<WorkflowInstance> workflows = await connection.QueryAsync<WorkflowInstance>(sql, new { stepIds });
+                await AddWorkflowsItemsWithModels(workflows.ToList(), connection);
 
-                return workflowInstances.ToList();
+                return workflows.ToList();
             }
         }
 
@@ -188,9 +170,76 @@ namespace Infrastructure.Data.Repositories
             {
                 string sql = "SELECT * FROM WorkflowSteps WHERE DepartmentId = @departmentId";
 
-                 IEnumerable<WorkFlowStep> steps = await connection.QueryAsync<WorkFlowStep>(sql, new { departmentId });
+                IEnumerable<WorkFlowStep> steps = await connection.QueryAsync<WorkFlowStep>(sql, new { departmentId });
 
-                 return steps.ToList();
+                return steps.ToList();
+            }
+        }
+
+        private async Task AddWorkflowsItemsWithModels(List<WorkflowInstance> workflows, SqlConnection connection)
+        {
+            foreach (WorkflowInstance workflow in workflows)
+            {
+                string getUserSql = "SELECT * FROM Users WHERE Id = @userId";
+                User? user = await connection.QueryFirstOrDefaultAsync<User>(getUserSql, new { userId = workflow.UserId });
+
+                if (user is null)
+                {
+                    return;
+                }
+
+                string userWorkflowsDirectory = _userWorkflowFilesService.GetUserWorkflowsDirectory(user);
+                List<UserFile> userFiles = _userWorkflowFilesService.GetUserUserWorkflowFiles(user, [".prt", ".asm", ".drw"]);
+
+                List<UserFile> workflowFiles = [..
+                userFiles.Where(file => file.Name == workflow.ItemName)
+                .OrderBy(file => file.Extension != ".drw" ? 0 : 1)];
+
+                Item item = new()
+                {
+                    Name = workflow.ItemName,
+                    Revision = workflow.ItemRevision,
+                    Status = ItemStatus.inWorkflow.ToString()
+                };
+
+                List<Model> models = [];
+
+                workflowFiles.ForEach(file =>
+                {
+                    Model model = new Model()
+                    {
+                        Name = file.Name,
+                        Type = file.Extension,
+                        Revision = item.Revision,
+                        Version = file.Version,
+                        FilePath = file.FullPath,
+                    };
+
+                    models.Add(model);
+                });
+
+                item.Models = models;
+                workflow.Item = item;
+            }
+
+        }
+
+        public async Task<WorkflowInstance?> SetWorkflowInstanceStatus(int workflowInstanceId, WorkflowStatus workflowStatus)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = @"UPDATE WorkflowInstances 
+                            SET Status = @workflowStatus 
+                            WHERE Id = @workflowInstanceId";
+
+                int rowsEdited = await connection.ExecuteAsync(sql, new { workflowInstanceId, workflowStatus = workflowStatus.ToString() });
+
+                if (rowsEdited == 0)
+                {
+                    return null;
+                }
+
+                return await connection.QueryFirstOrDefaultAsync<WorkflowInstance>("SELECT * FROM WorkflowInstances WHERE Id = @workflowInstanceId", new { workflowInstanceId });
             }
         }
     }

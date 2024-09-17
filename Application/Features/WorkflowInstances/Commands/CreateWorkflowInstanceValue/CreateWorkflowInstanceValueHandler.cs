@@ -21,7 +21,7 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
 
         public async Task<Result<WorkflowInstanceValue?>> Handle(CreateWorkflowInstanceValueCommand request, CancellationToken cancellationToken)
         {
-            ItemAtribute? atribute = await _itemAtributeRepository.GetItemAtribute(request.ItemAttributeId);
+            ItemAttribute? atribute = await _itemAtributeRepository.GetItemAtribute(request.ItemAttributeId);
 
             if (atribute is null)
             {
@@ -40,7 +40,7 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
             }
         }
 
-        private async Task<Result<WorkflowInstanceValue?>> CreateAttributeValue(CreateWorkflowInstanceValueCommand request, ItemAtribute atribute)
+        private async Task<Result<WorkflowInstanceValue?>> CreateAttributeValue(CreateWorkflowInstanceValueCommand request, ItemAttribute atribute)
         {
             WorkflowInstanceValue? newAttributeValue;
 
@@ -68,7 +68,7 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
             return Result<WorkflowInstanceValue?>.Success(newAttributeValue);
         }
 
-        private async Task<Result<WorkflowInstanceValue?>> UpdateAttributeValue(CreateWorkflowInstanceValueCommand request, ItemAtribute atribute)
+        private async Task<Result<WorkflowInstanceValue?>> UpdateAttributeValue(CreateWorkflowInstanceValueCommand request, ItemAttribute atribute)
         {
             WorkflowInstanceValue? newWorkflowInstanceValue;
 

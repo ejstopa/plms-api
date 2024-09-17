@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Application.Abstractions.FileSystem;
 using Application.Abstractions.Repositories;
 using Dapper;
@@ -38,13 +39,48 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<Item?> GetItemByName(string itemName)
+        public async Task<Item?> CreateItem(Item item)
+        {
+            using (SqlConnection connecton = new(_connectionString))
+            {
+                string sql =
+                @"INSERT INTO Items VALUES (
+                    @Name, @Revision, @Version, @Description, 
+                    @Family, @Status, @CreatedBy, @CreatedAt, 
+                    @LastModifiedBy, @LastModifiedAt, @CheckedOutBy, 
+                    @FamilyId )
+                SELECT CAST(SCOPE_IDENTITY() as INT)";
+
+                int id = await connecton.ExecuteScalarAsync<int>(sql, item);
+
+                return await connecton.QueryFirstOrDefaultAsync<Item>("SELECT * FROM Items WHERE Id = @id", new { id });
+
+            }
+
+        }
+
+        public async Task<Item?> GetLatestItemByName(string itemName, bool getModels = false)
         {
             using (SqlConnection connection = new(_connectionString))
             {
-                string sql = "SELECT * FROM Items WHERE Name = @itemName";
+                string sql = "SELECT TOP 1 * FROM Items WHERE Name = @itemName ORDER BY Id DESC";
 
-                return await connection.QueryFirstOrDefaultAsync<Item>(sql, new { itemName });
+                Item? item = await connection.QueryFirstOrDefaultAsync<Item>(sql, new { itemName });
+
+                if (item is null)
+                {
+                    return null;
+                }
+
+                List<Item> items = [item];
+
+                if (getModels)
+                {
+                    List<Model> models = await GetItemsModels(items.ToList());
+                    List<Item> itemsWithModels = AddItemsModels(items.ToList(), models);
+                }
+
+                return items[0];
             }
         }
 
@@ -66,7 +102,13 @@ namespace Infrastructure.Data.Repositories
 
             using (SqlConnection connection = new(_connectionString))
             {
-                string sql = "SELECT * FROM Items WHERE Family = @family";
+                string sql = @"SELECT *
+                                FROM (
+                                    SELECT *, ROW_NUMBER() OVER (PARTITION BY
+                                    Name ORDER BY Version DESC) AS row_number
+                                    FROM Items
+                                ) AS t
+                                WHERE t.row_number = 1 AND Family = @family";
 
                 items = await connection.QueryAsync<Item>(sql, new { family });
             }
@@ -135,15 +177,38 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
+        public async Task<Item?> SetItemStatus(int itemId, ItemStatus itemStatus)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = @"UPDATE Items 
+                            SET Status = @itemStatus 
+                            WHERE Id = @itemId
+                            SELECT CAST(SCOPE_IDENTITY() as INT)";
+                int rowsEdited = await connection.ExecuteAsync(sql, new { itemId, itemStatus = itemStatus.ToString() });
+
+                if (rowsEdited == 0)
+                {
+                    return null;
+                }
+                
+                return await connection.QueryFirstAsync<Item>("SELECT * FROM Items WHERE Id = @itemId", new { itemId });
+            }
+        }
+       
         private async Task<List<Item>> GetCheckedOutItemsWithModels(User user)
         {
+            List<UserFile> files = _userWorkspaceFIlesService.GetUserUserWorkspaceFiles(user, [".prt", ".asm", ".drw"]);
+
             List<Item> checkedOutItems = [.. (await GetUserCheckedOutItems(user.Id)).OrderBy(Item => Item.Name)];
-            checkedOutItems.ForEach(item =>
+            List<Item> checkedOutItemsFilterd = checkedOutItems.Where(item => files.Select(file => file.Name).Contains(item.Name)).ToList();
+
+            checkedOutItemsFilterd.ForEach(item =>
             {
-                item.LastRevision = _modelRevisionService.IncrementRevision(item.LastRevision);
+                item.Revision = _modelRevisionService.IncrementRevision(item.Revision);
                 item.Status = ItemStatus.checkedOut.ToString();
             });
-            List<Model> checkedOutItemsModels = [.. (await GetItemsModels(checkedOutItems)).OrderBy(model => model.Type != ".drw" ? 0 : 1)];
+            List<Model> checkedOutItemsModels = [.. (await GetItemsModels(checkedOutItemsFilterd)).OrderBy(model => model.Type != ".drw" ? 0 : 1)];
 
             string workspaceDirectory = _userWorkspaceFIlesService.GetUserWorkspaceDirectory(user);
 
@@ -153,7 +218,7 @@ namespace Infrastructure.Data.Repositories
                 model.FilePath = model.FilePath.Replace(libraryDirectory, workspaceDirectory);
             });
 
-            List<Item> checkedOutItemsWithModels = AddItemsModels(checkedOutItems, checkedOutItemsModels);
+            List<Item> checkedOutItemsWithModels = AddItemsModels(checkedOutItemsFilterd, checkedOutItemsModels);
 
             return [.. checkedOutItemsWithModels.OrderBy(item => item.Name)];
         }
@@ -201,7 +266,10 @@ namespace Infrastructure.Data.Repositories
 
         private async Task<List<Model>> GetItemsModels(List<Item> items)
         {
-            int[] itemIds = items.Select(item => item.Id).ToArray();
+            int?[] itemIds = items.Select(item =>
+            {
+                return item.Id != null ? item.Id : 0;
+            }).ToArray();
 
             using (SqlConnection connection = new(_connectionString))
             {
@@ -228,20 +296,7 @@ namespace Infrastructure.Data.Repositories
             return itemsWithModels;
         }
 
-        public async Task<Item?> SetItemStatus(int itemId, ItemStatus itemStatus)
-        {
-            using (SqlConnection connection = new(_connectionString))
-            {
-                string sql = @"UPDATE Items 
-                            SET Status = @itemStatus 
-                            WHERE Id = @itemId
-                            SELECT CAST(SCOPE_IDENTITY() as INT)";
-                int id = await connection.ExecuteScalarAsync<int>(sql, new { itemId, itemStatus = itemStatus.ToString() });
 
-                return await connection.QueryFirstAsync<Item>("SELECT * FROM Items WHERE Id = @id", new { id });
-            }
-        }
 
-       
     }
 }

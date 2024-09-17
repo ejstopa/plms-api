@@ -10,5 +10,6 @@ namespace Application.Abstractions.Repositories
     {
         public Task<List<ItemFamily>> GetAllItemFamilies();
         public Task<ItemFamily?> GetItemFamilyByName(string familyName);
+        public Task<ItemFamily?> GetItemFamilyById(int familyId);
     }
 }

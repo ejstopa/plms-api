@@ -21,7 +21,7 @@ namespace Api.Endpoints
 
                 if (user is null)
                 {
-                    return Results.NotFound();
+                    return Results.NotFound("Usuário não encontrado");
                 }
 
                 return Results.Ok(user);

@@ -15,7 +15,7 @@ namespace Domain.Entities
         public int Version { get; set; } = 0;
         public string Revision { get; set; } = "-";
         public string FilePath { get; set; } = string.Empty;
-        public int ItemId { get; set; }
+        public int? ItemId { get; set; }
         public int CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; }
         public int LastModifiedBy { get; set; }
