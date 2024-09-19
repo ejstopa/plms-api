@@ -2,8 +2,7 @@
 using Application.Features.Users;
 using Application.Features.Users.Commands.AuthenticateUser;
 using Application.Features.Users.Commands.DeleteUserWorkspaceFiles;
-using Application.Features.Users.Queries.GetUserById;
-using Application.Features.Users.Queries.GetUserWorkspaceFiles;
+using Domain.Results;
 using MediatR;
 
 namespace Api.Endpoints
@@ -14,38 +13,28 @@ namespace Api.Endpoints
         {
             var baseUrl = app.MapGroup("users");
 
-            baseUrl.MapGet("{id}", async (ISender sender, int id) =>
-            {
-                GetUserByIdQuery getUserByIdQuery = new() { Id = id };
-                UserResponseDto user = await sender.Send(getUserByIdQuery);
-
-                if (user is null)
-                {
-                    return Results.NotFound("Usuário não encontrado");
-                }
-
-                return Results.Ok(user);
-            }).WithName("GetUserById");
-
             baseUrl.MapPost("login", async (ISender sender, AuthenticateUserCommand loginData) =>
             {
-                UserResponseDto user = await sender.Send(loginData);
+                Result<UserResponseDto?> result = await sender.Send(loginData);
 
-                if (user is null)
+                if (!result.IsSuccess)
                 {
-                    return Results.Unauthorized();
+                    return Results.Problem(result.Error!.Message, null, result.Error.StatusCode);
                 }
 
-                return Results.Ok(user);
+                return Results.Ok(result.Value);
             }).WithName("Login");
 
-            baseUrl.MapDelete("{userId}/workspace-files/{filePath}", async (ISender sender, int userId, string filePath) =>{
-                bool exclusionSucceded = await sender.Send(new DeleteUserWorkspaceFilesCommand() {FilePath = filePath});
+            baseUrl.MapDelete("{userId}/workspace-files/{filePath}", async (ISender sender, int userId, string filePath) =>
+            {
+                Result<bool> result = await sender.Send(new DeleteUserWorkspaceFilesCommand() { FilePath = filePath });
 
-                return exclusionSucceded?
-                Results.Ok() :
-                Results.Conflict(filePath);
+                if (!result.IsSuccess)
+                {
+                    return Results.Problem(result.Error!.Message, null, result.Error.StatusCode);
+                }
 
+                return Results.Ok(result.Value);
             }).WithName("DeleteUserWorkspaceFile");
         }
     }

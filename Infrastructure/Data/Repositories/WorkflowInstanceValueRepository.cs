@@ -22,8 +22,8 @@ namespace Infrastructure.Data.Repositories
                 string sql = "SELECT * FROM WorkflowInstanceValues WHERE WorkflowInstanceId = @workflowInstanceId";
 
                 IEnumerable<WorkflowInstanceValue> workflowInstanceValues = await connection.QueryAsync<WorkflowInstanceValue>(
-                    sql, new{workflowInstanceId});
-                
+                    sql, new { workflowInstanceId });
+
                 return workflowInstanceValues.ToList();
             }
         }
@@ -85,7 +85,7 @@ namespace Infrastructure.Data.Repositories
 
                 await connection.ExecuteScalarAsync<int>(sql, new { value, WorkflowInstanceId, attributeId });
 
-                string selectWorkflowValueSql = 
+                string selectWorkflowValueSql =
                 @"SELECT * FROM WorkflowInstanceValues 
                 WHERE WorkflowInstanceId = @WorkflowInstanceId AND ItemAttributeId = @attributeId";
 
@@ -96,15 +96,15 @@ namespace Infrastructure.Data.Repositories
         public async Task<WorkflowInstanceValue?> UpdateWorkflowInstanceValue(int WorkflowInstanceId, int attributeId, double value)
         {
             using (SqlConnection connection = new(_connectionString))
-            {               
+            {
                 string sql =
                 @"UPDATE WorkflowInstanceValues 
                 SET ItemAttributeValueNumber = @value 
                 WHERE WorkflowInstanceId = @WorkflowInstanceId AND ItemAttributeId = @attributeId";
-            
+
                 await connection.ExecuteAsync(sql, new { value, WorkflowInstanceId, attributeId });
 
-                string selectWorkflowValueSql = 
+                string selectWorkflowValueSql =
                 @"SELECT * FROM WorkflowInstanceValues 
                 WHERE WorkflowInstanceId = @WorkflowInstanceId AND ItemAttributeId = @attributeId";
 

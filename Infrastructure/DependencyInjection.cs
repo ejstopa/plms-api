@@ -24,6 +24,7 @@ namespace Infrastructure
             services.AddScoped<IItemAtributeValueRepository, ItemAttributeValueRepository>();
             services.AddScoped<IItemAtributeRepository, ItemAttributeRepository>();
             services.AddScoped<IWorkflowInstanceValueRepository, WorkflowInstanceValueRepository>();
+            services.AddScoped<IWorkflowStepForkRepository, WorkflowStepForkRepository>();
 
             services.AddScoped<IUserWorkspaceFIlesService, UserWorkspaceFilesService>();
             services.AddScoped<ILibraryFilesService, LibraryFilesService>();

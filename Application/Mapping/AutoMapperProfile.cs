@@ -21,7 +21,6 @@ namespace Application.Mapping
         {
             CreateMap<User, UserResponseDto>();
             CreateMap<Model, ModelResponseDto>();
-            CreateMap<UserFile, UserWorkspaceFileResponse>();
             CreateMap<LibraryDirectory, LibraryDirectoryResponse>();
             CreateMap<Item, ItemResponseDto>();
             CreateMap<ItemNameReservation, ItemNameReservationResponseDto>();

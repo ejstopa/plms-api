@@ -17,12 +17,20 @@ namespace Application.Features.WorkflowInstances.Commands.IncrementWorkflowStep
         private readonly IMapper _mapper;
         private readonly IWorkflowInstanceRepository _workflowInstanceRepository;
         private readonly IItemRepository _itemRepository;
+        private readonly IWorkflowStepForkRepository _workflowStepForkRepository;
+        private readonly IWorkflowInstanceValueRepository _workflowInstanceValueRepository;
 
-        public IncrementWorkflowStepHandler(IMapper mapper, IWorkflowInstanceRepository workflowInstanceRepository, IItemRepository itemRepository)
+        public IncrementWorkflowStepHandler(IMapper mapper,
+        IWorkflowInstanceRepository workflowInstanceRepository,
+        IItemRepository itemRepository, 
+        IWorkflowStepForkRepository workflowStepForkRepository, 
+        IWorkflowInstanceValueRepository workflowInstanceValueRepository)
         {
             _mapper = mapper;
             _workflowInstanceRepository = workflowInstanceRepository;
             _itemRepository = itemRepository;
+            _workflowStepForkRepository = workflowStepForkRepository;
+            _workflowInstanceValueRepository = workflowInstanceValueRepository;
         }
         public async Task<Result<WorkflowInstanceResponseDto?>> Handle(IncrementWorkflowStepCommand request, CancellationToken cancellationToken)
         {
@@ -33,7 +41,7 @@ namespace Application.Features.WorkflowInstances.Commands.IncrementWorkflowStep
                 return Result<WorkflowInstanceResponseDto?>.Failure(new Error(404, "Workflow não encontrado"));
             }
 
-            List<WorkFlowStep>? workFlowSteps = await _workflowInstanceRepository.GetWorkflowInstancSteps(request.WorkflowInstanceId);
+            List<WorkFlowStep>? workFlowSteps = await _workflowInstanceRepository.GetWorkflowInstancSteps(request.WorkflowInstanceId, workflow.ItemFamilyId);
 
             if (workFlowSteps is null || workFlowSteps.Count == 0)
             {
@@ -58,8 +66,46 @@ namespace Application.Features.WorkflowInstances.Commands.IncrementWorkflowStep
 
             if (stepIndex < workFlowStepsOrdered.Count - 1)
             {
-                WorkFlowStep nextStep = workFlowStepsOrdered[stepIndex + 1];
+                WorkFlowStep? nextStep = null;
+                List<WorkflowStepFork> stepForks = await _workflowStepForkRepository.GetStepForkByWorkflowAndStep(workflow.WorkflowTemplateId, workflow.CurrentStepId);
+
+                if (stepForks.Count > 0)
+                {
+                    WorkflowStepFork? stepForkWithoutCondition = stepForks.FirstOrDefault(step => step.DecisionAttributeId == null);
+
+                    if (stepForkWithoutCondition != null)
+                    {
+                        nextStep = workFlowStepsOrdered.FirstOrDefault(step => step.Id == stepForkWithoutCondition.NextStepId);
+                    }
+                    else
+                    {
+                        List<WorkflowInstanceValue> workflowValues = await _workflowInstanceValueRepository.GetWorkflowInstanceValues(workflow.Id);
+                        
+                        foreach (WorkflowStepFork stepFork in stepForks)
+                        {
+                            WorkflowInstanceValue? decisionValue = workflowValues.FirstOrDefault(value => 
+                            value.ItemAttributeId == stepFork.DecisionAttributeId &&
+                            (value.ItemAttributeValueNumber.ToString() == stepFork.DecisionAttributeValue ||
+                            value.ItemAttributeValueString == stepFork.DecisionAttributeValue));
+
+                            if (decisionValue != null)
+                            {
+                                nextStep = workFlowStepsOrdered.FirstOrDefault(step => step.Id == stepFork.NextStepId);
+                            }
+                        }
+
+                    }
+                }
+
+                if (nextStep is null)
+                {
+                    nextStep = workFlowStepsOrdered[stepIndex + 1];
+                }
+
+
                 WorkFlowStep previousStep = workFlowStepsOrdered[stepIndex];
+
+
 
                 workflowUpdated = await _workflowInstanceRepository.UpdateWorkflowStep(request.WorkflowInstanceId, nextStep.Id, previousStep.Id);
 

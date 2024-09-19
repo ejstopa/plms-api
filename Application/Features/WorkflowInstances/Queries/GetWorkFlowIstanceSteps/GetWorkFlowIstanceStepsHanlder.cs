@@ -10,16 +10,23 @@ namespace Application.Features.WorkflowInstances.Queries.GetWorkFlowIstanceSteps
     {
         private readonly IMapper _mapper;
         private readonly IWorkflowInstanceRepository _workflowInstanceRepository;
-        
+
         public GetWorkFlowIstanceStepsHanlder(IMapper mapper, IWorkflowInstanceRepository workflowInstanceRepository)
         {
             _mapper = mapper;
             _workflowInstanceRepository = workflowInstanceRepository;
-            
+
         }
         public async Task<List<WorkflowStepResponseDto>> Handle(GetWorkFlowIstanceStepsQuery request, CancellationToken cancellationToken)
         {
-            List<WorkFlowStep>? steps = await _workflowInstanceRepository.GetWorkflowInstancSteps(request.WorkflowInsanceId);
+            WorkflowInstance? workflow = await _workflowInstanceRepository.GetWorkflowInstanceById(request.WorkflowInsanceId);
+
+            if (workflow is null)
+            {
+                return [];
+            }
+
+            List<WorkFlowStep> steps = await _workflowInstanceRepository.GetWorkflowInstancSteps(request.WorkflowInsanceId, workflow.ItemFamilyId);
 
             return _mapper.Map<List<WorkflowStepResponseDto>>(steps);
         }

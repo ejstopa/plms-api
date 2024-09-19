@@ -7,6 +7,7 @@ namespace Application.Abstractions.FileSystem
 {
     public interface IFileManagementService
     {
-        public void MoveFile(string previousPath, string newPath);
+        public bool MoveFile(string previousPath, string newPath);
+        public bool DeleteFile(string filePath);
     }
 }

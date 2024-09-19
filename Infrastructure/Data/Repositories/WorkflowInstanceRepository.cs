@@ -60,7 +60,7 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<List<WorkFlowStep>?> GetWorkflowInstancSteps(int workflowInstanceId)
+        public async Task<List<WorkFlowStep>> GetWorkflowInstancSteps(int workflowInstanceId, int itemFamilyId)
         {
 
             using (SqlConnection connection = new(_connectionString))
@@ -88,9 +88,10 @@ namespace Infrastructure.Data.Repositories
                     WHERE Id IN(
                 	SELECT DISTINCT WorkflowSteps_ItemAttributes.ItemAttributeId 
                 	FROM WorkflowSteps_ItemAttributes 
-                	WHERE WorkflowStepId = @stepId)";
+                	WHERE WorkflowStepId = @stepId AND (ItemFamilyId IS NULL OR ItemFamilyId = @itemFamilyId))";
 
-                    IEnumerable<ItemAttribute> attributes = await connection.QueryAsync<ItemAttribute>(getAttributesSql, new { stepId = step.Id });
+                    IEnumerable<ItemAttribute> attributes = await connection.QueryAsync<ItemAttribute>(
+                        getAttributesSql, new { stepId = step.Id, itemFamilyId });
                     List<int> attributesIds = attributes.Select(attribute => attribute.Id).ToList();
 
                     string getAttributeOptionsSql = "SELECT * FROM ItemAttributeOptions WHERE ItemAttributeId IN @attributesIds";

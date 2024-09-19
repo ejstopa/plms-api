@@ -5,11 +5,13 @@ using System.Threading.Tasks;
 using Application.Abstractions.Repositories;
 using AutoMapper;
 using Domain.Entities;
+using Domain.Errors;
+using Domain.Results;
 using MediatR;
 
 namespace Application.Features.Users.Commands.AuthenticateUser
 {
-    public class AuthenticateUserCommandHandler : IRequestHandler<AuthenticateUserCommand, UserResponseDto?>
+    public class AuthenticateUserCommandHandler : IRequestHandler<AuthenticateUserCommand, Result<UserResponseDto?>>
     {
         private readonly IMapper _mapper;
         private readonly IUserRepository _userRepository;
@@ -20,16 +22,16 @@ namespace Application.Features.Users.Commands.AuthenticateUser
             _userRepository = userRepository;
         }
 
-        public async Task<UserResponseDto?> Handle(AuthenticateUserCommand request, CancellationToken cancellationToken)
+        public async Task<Result<UserResponseDto?>> Handle(AuthenticateUserCommand request, CancellationToken cancellationToken)
         {        
             User? user = await _userRepository.GetUserByName(request.Name);
 
             if (user is null || request.Password != user.Password)
             {
-                return null;
+                return Result<UserResponseDto?>.Failure(new Error(401, "Usuário ou senha inválidos"));
             }
             
-            return await Task.FromResult(_mapper.Map<UserResponseDto>(user));
+            return Result<UserResponseDto?>.Success(_mapper.Map<UserResponseDto>(user));
         }
     }
 }

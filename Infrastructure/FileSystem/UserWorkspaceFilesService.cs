@@ -60,19 +60,6 @@ namespace Infrastructure.FileSystem
             return userFiles;
         }
 
-        public bool DeleteUserWorkspaceFile(string filePath)
-        {
-            try
-            {
-                File.Delete(filePath);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-
-            return true;
-        }
 
     }
 }

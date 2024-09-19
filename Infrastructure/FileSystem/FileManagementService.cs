@@ -8,16 +8,29 @@ namespace Infrastructure.FileSystem
 {
     public class FileManagementService : IFileManagementService
     {
-        public void MoveFile(string previousPath, string newPath)
+        public bool DeleteFile(string filePath)
+        {
+            try
+            {
+                File.Delete(filePath);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public bool MoveFile(string previousPath, string newPath)
         {
             try
             {
                 File.Move(previousPath, newPath);
+                return true;
             }
-            catch(Exception e)
+            catch
             {
-                // throw new Exception($"Ocorreu um erro ao tentar mover o arquivo{previousPath}");
-                throw new Exception(e.Message);
+                return false;
             }
         }
     }
