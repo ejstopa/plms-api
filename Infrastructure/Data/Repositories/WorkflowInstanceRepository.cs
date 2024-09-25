@@ -62,7 +62,6 @@ namespace Infrastructure.Data.Repositories
 
         public async Task<List<WorkFlowStep>> GetWorkflowInstancSteps(int workflowInstanceId, int itemFamilyId)
         {
-
             using (SqlConnection connection = new(_connectionString))
             {
                 connection.Open();
@@ -75,13 +74,13 @@ namespace Infrastructure.Data.Repositories
                 	SELECT WorkflowTemplates.Id 
                 	FROM WorkflowInstances LEFT JOIN WorkflowTemplates 
                 	ON WorkflowTemplates.Id = WorkflowInstances.WorkflowTemplateId 
-                	WHERE WorkflowInstances.Id = @workflowInstanceId)";
+                	WHERE WorkflowInstances.Id = @workflowInstanceId) 
+                    ORDER BY WorkflowTemplates_WorkflowSteps.StepOrder";
 
                 IEnumerable<WorkFlowStep> steps = await connection.QueryAsync<WorkFlowStep>(getWorkflowStepsSql, new { workflowInstanceId });
 
                 foreach (WorkFlowStep step in steps)
                 {
-
                     string getAttributesSql =
                     @"SELECT * 
                     FROM ItemAttributes 
@@ -111,16 +110,16 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<WorkflowInstance?> UpdateWorkflowStep(int workflowInstanceId, int? newStepId, int? previousStepId)
+        public async Task<WorkflowInstance?> UpdateWorkflowStep(int workflowInstanceId, int? newStepId, int? previousStepId, string? message = null)
         {
             using (SqlConnection connection = new(_connectionString))
             {
                 string sql =
                 @"UPDATE WorkflowInstances 
-                SET CurrentStepId = @newStepId, PreviousStepId = @previousStepId 
+                SET CurrentStepId = @newStepId, PreviousStepId = @previousStepId, Message = @message 
                 WHERE Id = @workflowInstanceId";
 
-                await connection.ExecuteAsync(sql, new { newStepId, previousStepId, workflowInstanceId });
+                await connection.ExecuteAsync(sql, new { newStepId, previousStepId, workflowInstanceId, message });
 
                 return await connection.QueryFirstAsync<WorkflowInstance>(
                     "SELECT * FROM WorkflowInstances WHERE Id = @workflowInstanceId", new { workflowInstanceId });
@@ -177,7 +176,38 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
-        private async Task AddWorkflowsItemsWithModels(List<WorkflowInstance> workflows, SqlConnection connection)
+        public async Task<WorkflowInstance?> SetWorkflowInstanceStatus(int workflowInstanceId, WorkflowStatus workflowStatus)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = @"UPDATE WorkflowInstances 
+                            SET Status = @workflowStatus 
+                            WHERE Id = @workflowInstanceId";
+
+                int rowsEdited = await connection.ExecuteAsync(sql, new { workflowInstanceId, workflowStatus = workflowStatus.ToString() });
+
+                if (rowsEdited == 0)
+                {
+                    return null;
+                }
+
+                return await connection.QueryFirstOrDefaultAsync<WorkflowInstance>("SELECT * FROM WorkflowInstances WHERE Id = @workflowInstanceId", new { workflowInstanceId });
+            }
+        }
+
+        public async Task<bool> DeleteWorkflowInstance(int workflowInstanceId)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = "DELETE FROM WorkflowInstances WHERE Id = @workflowInstanceId";
+
+                int rowsDeleted = await connection.ExecuteAsync(sql, new {workflowInstanceId});
+
+                return rowsDeleted != 0;
+            }
+        }
+
+         private async Task AddWorkflowsItemsWithModels(List<WorkflowInstance> workflows, SqlConnection connection)
         {
             foreach (WorkflowInstance workflow in workflows)
             {
@@ -223,25 +253,6 @@ namespace Infrastructure.Data.Repositories
                 workflow.Item = item;
             }
 
-        }
-
-        public async Task<WorkflowInstance?> SetWorkflowInstanceStatus(int workflowInstanceId, WorkflowStatus workflowStatus)
-        {
-            using (SqlConnection connection = new(_connectionString))
-            {
-                string sql = @"UPDATE WorkflowInstances 
-                            SET Status = @workflowStatus 
-                            WHERE Id = @workflowInstanceId";
-
-                int rowsEdited = await connection.ExecuteAsync(sql, new { workflowInstanceId, workflowStatus = workflowStatus.ToString() });
-
-                if (rowsEdited == 0)
-                {
-                    return null;
-                }
-
-                return await connection.QueryFirstOrDefaultAsync<WorkflowInstance>("SELECT * FROM WorkflowInstances WHERE Id = @workflowInstanceId", new { workflowInstanceId });
-            }
         }
     }
 

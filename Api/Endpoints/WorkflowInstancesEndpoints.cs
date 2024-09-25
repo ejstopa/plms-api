@@ -10,6 +10,8 @@ using Domain.Entities;
 using Domain.Results;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Application.Features.WorkflowInstances.Commands.DeleteWorkflowInstance;
+using Application.Features.WorkflowInstances.Commands.ReturnWorkflowStep;
 
 namespace Api.Endpoints
 {
@@ -17,19 +19,6 @@ namespace Api.Endpoints
     {
         public static void AddWorkflowInstancesEndpoints(this WebApplication app)
         {
-            app.MapPost("workflow-instances", async (ISender sender, CreateWorkflowInstanceCommand workflowData) =>
-            {
-                Result<WorkflowInstanceResponseDto> workflowResult = await sender.Send(workflowData);
-
-                if (!workflowResult.IsSuccess)
-                {
-                    return Results.Problem(workflowResult.Error!.Message, null, workflowResult.Error.StatusCode);
-                }
-
-                return Results.Ok(workflowResult.Value);
-
-            }).WithName("CreateWorkflowInstance");
-
             app.MapGet("users/{userId}/workflow-instances", async (ISender sender, int userId) =>
             {
                 Result<List<WorkflowInstanceResponseDto>> workflowsResult = await sender.Send(new GetWorkflowsByUserQuery { UserId = userId });
@@ -54,7 +43,6 @@ namespace Api.Endpoints
                 return Results.Ok(workflowsResult.Value);
             }).WithName("GetWorkflowInstancesByDepartment");
 
-
             app.MapGet("workflow-instances/{workflowId}/steps", async (ISender sender, int workflowId) =>
             {
                 List<WorkflowStepResponseDto> steps = await sender.Send(new GetWorkFlowIstanceStepsQuery { WorkflowInsanceId = workflowId });
@@ -66,19 +54,6 @@ namespace Api.Endpoints
 
                 return Results.Ok(steps);
             }).WithName("GetWorkFlowIstanceSteps");
-
-            app.MapPost("workflow-instances/{id}/attibute-values", async (ISender sender, int id, CreateWorkflowInstanceValueCommand CreateWorkflowInstanceValueCommand) =>
-            {
-                Result<WorkflowInstanceValue?> result = await sender.Send(CreateWorkflowInstanceValueCommand);
-
-                if (!result.IsSuccess)
-                {
-                    return Results.Problem(result.Error!.Message, null, result!.Error.StatusCode);
-                }
-
-                return Results.Ok(result.Value);
-
-            }).WithName("CreateWorkflowInstanceValue");
 
             app.MapGet("workflow-instances/{id}/attibute-values", async (ISender sender, int id) =>
             {
@@ -93,23 +68,72 @@ namespace Api.Endpoints
 
             }).WithName("GetWorkflowInstanceValue");
 
-            app.MapPut("workflow-instances/{workflowId}", async (ISender sender, int workflowId, [FromQuery] bool incrementStep, IncrementWorkflowStepCommand incrementWorkflowStepCommand) =>
+            app.MapPost("workflow-instances", async (ISender sender, CreateWorkflowInstanceCommand workflowData) =>
             {
-                if (incrementStep)
+                Result<WorkflowInstanceResponseDto> workflowResult = await sender.Send(workflowData);
+
+                if (!workflowResult.IsSuccess)
                 {
-                    Result<WorkflowInstanceResponseDto?> result = await sender.Send(incrementWorkflowStepCommand);
+                    return Results.Problem(workflowResult.Error!.Message, null, workflowResult.Error.StatusCode);
+                }
 
-                    if (!result.IsSuccess)
-                    {
-                        return Results.Problem(result.Error!.Message, null, result!.Error.StatusCode);
-                    }
+                return Results.Ok(workflowResult.Value);
 
-                    return Results.Ok(result.Value);
+            }).WithName("CreateWorkflowInstance");
+
+            app.MapPost("workflow-instances/{id}/attibute-values", async (ISender sender, int id, CreateWorkflowInstanceValueCommand CreateWorkflowInstanceValueCommand) =>
+            {
+                Result<WorkflowInstanceValue?> result = await sender.Send(CreateWorkflowInstanceValueCommand);
+
+                if (!result.IsSuccess)
+                {
+                    return Results.Problem(result.Error!.Message, null, result!.Error.StatusCode);
+                }
+
+                return Results.Ok(result.Value);
+
+            }).WithName("CreateWorkflowInstanceValue");
+
+            app.MapPost("workflow-instances/{workflowId}/step-completions", async (ISender sender, int workflowId) =>
+            {
+                Result<WorkflowInstanceResponseDto?> result = await sender.Send(
+                    new IncrementWorkflowStepCommand { WorkflowInstanceId = workflowId });
+
+                if (!result.IsSuccess)
+                {
+                    return Results.Problem(result.Error!.Message, null, result!.Error.StatusCode);
+                }
+
+                return Results.Ok(result.Value);
+
+            }).WithName("IncrementWorkflowInstanceStep");
+
+            app.MapPost("workflow-instances/{workflowId}/step-returns", async (
+                ISender sender, int workflowId, ReturnWorkflowStepCommand returnWorkflowStepCommand) =>
+            {
+                Result<bool> result = await sender.Send(returnWorkflowStepCommand);
+
+                if (!result.IsSuccess)
+                {
+                    return Results.Problem(result.Error!.Message, null, result!.Error.StatusCode);
+                }
+
+                return Results.Ok();
+
+            }).WithName("ReturnWorkflowStep");
+
+            app.MapDelete("workflow-instances/{id}", async (ISender sender, int id) =>
+            {
+                Result<bool> result = await sender.Send(new DeleteWorkflowInstanceCommand { WorkflowInstanceId = id });
+
+                if (!result.IsSuccess)
+                {
+                    return Results.Problem(result.Error!.Message, null, result.Error.StatusCode);
                 }
 
                 return Results.NoContent();
 
-            }).WithName("UpdateWorkflowInstance");
+            }).WithName("DeleteWorkflowInstance");
 
 
 

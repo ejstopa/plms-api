@@ -22,8 +22,8 @@ namespace Application.Features.WorkflowInstances.Commands.IncrementWorkflowStep
 
         public IncrementWorkflowStepHandler(IMapper mapper,
         IWorkflowInstanceRepository workflowInstanceRepository,
-        IItemRepository itemRepository, 
-        IWorkflowStepForkRepository workflowStepForkRepository, 
+        IItemRepository itemRepository,
+        IWorkflowStepForkRepository workflowStepForkRepository,
         IWorkflowInstanceValueRepository workflowInstanceValueRepository)
         {
             _mapper = mapper;
@@ -48,100 +48,110 @@ namespace Application.Features.WorkflowInstances.Commands.IncrementWorkflowStep
                 return Result<WorkflowInstanceResponseDto?>.Failure(new Error(409, "Ocorreu um erro encontrar as etapas do workflow"));
             }
 
-            List<WorkFlowStep>? workFlowStepsOrdered = workFlowSteps.OrderBy(step => step.StepOrder).ToList();
+            int currentStepIndex = workFlowSteps.IndexOf(workFlowSteps.FirstOrDefault(step => step.Id == workflow.CurrentStepId)!);
 
-            int stepIndex = 0;
-
-            try
+            if (currentStepIndex < workFlowSteps.Count - 1)
             {
-                stepIndex = workFlowStepsOrdered.IndexOf(workFlowStepsOrdered.FirstOrDefault(step => step.Id == workflow.CurrentStepId)!);
+                return await FinalizeWorkflowStep(workflow, workFlowSteps, currentStepIndex);
             }
-            catch
+            else
+            {
+                if (workflow.ItemId != null)
+                {
+                    bool itemUpdated = await UpdateItem((int)workflow.ItemId!, workflow.UserId);
+
+                    if (!itemUpdated)
+                    {
+                        return Result<WorkflowInstanceResponseDto?>.Failure(new Error(409, "Ocorreu atualizar o status do item do workflow"));
+                    }
+                }
+
+                return await FinalizeWorkflowLastStep(workflow);
+            }
+
+        }
+
+        private async Task<Result<WorkflowInstanceResponseDto?>> FinalizeWorkflowStep(
+            WorkflowInstance workflow, List<WorkFlowStep> workFlowSteps, int currentStepIndex)
+        {
+            WorkflowInstance? workflowUpdated = null;
+            WorkFlowStep? nextStep = null;
+            List<WorkflowStepFork> stepForks = await _workflowStepForkRepository.GetStepForkByWorkflowAndStep(workflow.WorkflowTemplateId, workflow.CurrentStepId);
+
+            if (stepForks.Count > 0)
+            {
+                WorkflowStepFork? stepForkWithoutCondition = stepForks.FirstOrDefault(step => step.DecisionAttributeId == null);
+
+                if (stepForkWithoutCondition != null)
+                {
+                    nextStep = workFlowSteps.FirstOrDefault(step => step.Id == stepForkWithoutCondition.NextStepId);
+                }
+                else
+                {
+                    List<WorkflowInstanceValue> workflowValues = await _workflowInstanceValueRepository.GetWorkflowInstanceValues(workflow.Id);
+
+                    foreach (WorkflowStepFork stepFork in stepForks)
+                    {
+                        WorkflowInstanceValue? decisionValue = workflowValues.FirstOrDefault(value =>
+                        value.ItemAttributeId == stepFork.DecisionAttributeId &&
+                        (value.ItemAttributeValueNumber.ToString() == stepFork.DecisionAttributeValue ||
+                        value.ItemAttributeValueString == stepFork.DecisionAttributeValue));
+
+                        if (decisionValue != null)
+                        {
+                            nextStep = workFlowSteps.FirstOrDefault(step => step.Id == stepFork.NextStepId);
+                        }
+                    }
+
+                }
+            }
+
+            if (nextStep is null)
+            {
+                nextStep = workFlowSteps[currentStepIndex + 1];
+            }
+
+            WorkFlowStep previousStep = workFlowSteps[currentStepIndex];
+
+            workflowUpdated = await _workflowInstanceRepository.UpdateWorkflowStep(workflow.Id, nextStep.Id, previousStep.Id);
+
+            if (workflowUpdated is null)
             {
                 return Result<WorkflowInstanceResponseDto?>.Failure(new Error(409, "Ocorreu um erro ao finalizar a etapa do workflow"));
             }
 
-            WorkflowInstance? workflowUpdated = null;
-            WorkflowInstance? workflowFinished = null;
+            return Result<WorkflowInstanceResponseDto?>.Success(_mapper.Map<WorkflowInstanceResponseDto>(workflowUpdated));
+        }
 
-            if (stepIndex < workFlowStepsOrdered.Count - 1)
+        private async Task<Result<WorkflowInstanceResponseDto?>> FinalizeWorkflowLastStep(WorkflowInstance workflow)
+        {
+            WorkflowInstance? workflowUpdated = await _workflowInstanceRepository.UpdateWorkflowStep(
+                workflow.Id, null, null);
+
+            WorkflowInstance? workflowFinished = await _workflowInstanceRepository.SetWorkflowInstanceStatus(
+                workflow.Id, WorkflowStatus.released);
+
+            if (workflowUpdated is null || workflowFinished is null)
             {
-                WorkFlowStep? nextStep = null;
-                List<WorkflowStepFork> stepForks = await _workflowStepForkRepository.GetStepForkByWorkflowAndStep(workflow.WorkflowTemplateId, workflow.CurrentStepId);
-
-                if (stepForks.Count > 0)
-                {
-                    WorkflowStepFork? stepForkWithoutCondition = stepForks.FirstOrDefault(step => step.DecisionAttributeId == null);
-
-                    if (stepForkWithoutCondition != null)
-                    {
-                        nextStep = workFlowStepsOrdered.FirstOrDefault(step => step.Id == stepForkWithoutCondition.NextStepId);
-                    }
-                    else
-                    {
-                        List<WorkflowInstanceValue> workflowValues = await _workflowInstanceValueRepository.GetWorkflowInstanceValues(workflow.Id);
-                        
-                        foreach (WorkflowStepFork stepFork in stepForks)
-                        {
-                            WorkflowInstanceValue? decisionValue = workflowValues.FirstOrDefault(value => 
-                            value.ItemAttributeId == stepFork.DecisionAttributeId &&
-                            (value.ItemAttributeValueNumber.ToString() == stepFork.DecisionAttributeValue ||
-                            value.ItemAttributeValueString == stepFork.DecisionAttributeValue));
-
-                            if (decisionValue != null)
-                            {
-                                nextStep = workFlowStepsOrdered.FirstOrDefault(step => step.Id == stepFork.NextStepId);
-                            }
-                        }
-
-                    }
-                }
-
-                if (nextStep is null)
-                {
-                    nextStep = workFlowStepsOrdered[stepIndex + 1];
-                }
-
-
-                WorkFlowStep previousStep = workFlowStepsOrdered[stepIndex];
-
-
-
-                workflowUpdated = await _workflowInstanceRepository.UpdateWorkflowStep(request.WorkflowInstanceId, nextStep.Id, previousStep.Id);
-
-                if (workflowUpdated is null)
-                {
-                    return Result<WorkflowInstanceResponseDto?>.Failure(new Error(409, "Ocorreu um erro ao finalizar a etapa do workflow"));
-                }
-            }
-            else
-            {
-                workflowUpdated = await _workflowInstanceRepository.UpdateWorkflowStep(request.WorkflowInstanceId, null, null);
-                workflowFinished = await _workflowInstanceRepository.SetWorkflowInstanceStatus(request.WorkflowInstanceId, WorkflowStatus.released);
-
-                if (workflowUpdated is null || workflowFinished is null)
-                {
-                    return Result<WorkflowInstanceResponseDto?>.Failure(new Error(409, "Ocorreu um erro ao finalizar a etapa do workflow"));
-                }
-
-                Item? itemUpdated = null;
-                bool itemUncheckedOut = false;
-
-                if (workflowUpdated.ItemId != null)
-                {
-                    itemUpdated = await _itemRepository.SetItemStatus((int)workflowUpdated.ItemId, ItemStatus.released);
-                    itemUncheckedOut = await _itemRepository.ToggleItemCheckout((int)workflowUpdated.ItemId, workflowUpdated.UserId, false);
-
-                    if (itemUpdated is null || itemUncheckedOut == false)
-                    {
-                        return Result<WorkflowInstanceResponseDto?>.Failure(new Error(409, "Ocorreu um erro ao finalizar a etapa do workflow"));
-                    }
-
-                }
-
+                return Result<WorkflowInstanceResponseDto?>.Failure(new Error(409, "Ocorreu um erro ao finalizar a etapa do workflow"));
             }
 
             return Result<WorkflowInstanceResponseDto?>.Success(_mapper.Map<WorkflowInstanceResponseDto>(workflowFinished));
+
         }
+
+        private async Task<bool> UpdateItem(int itemId, int userId)
+        {
+            Item? itemUpdated = await _itemRepository.SetItemStatus(itemId, ItemStatus.released);
+            bool itemUncheckedOut = await _itemRepository.ToggleItemCheckout(itemId, userId, false);
+
+            if (itemUpdated is null || itemUncheckedOut == false)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
     }
 }

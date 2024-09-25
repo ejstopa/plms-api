@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using Application.Features.Items;
 using Application.Features.Items.Commands.CreateItem;
 using Application.Features.Items.Commands.CreateItemAttributeValue;
@@ -30,18 +29,6 @@ namespace Api.Endpoints
                 return Results.Ok(item);
             }).WithName("GetItemById");
 
-            app.MapPost("items", async (ISender sender, CreateItemCommand createItemCommand) =>
-            {
-                Result<ItemResponseDto?> result = await sender.Send(createItemCommand);
-
-                if (result.Error != null)
-                {
-                    return Results.Problem(result.Error.Message, null, result.Error.StatusCode);
-                }
-
-                return Results.Ok(result.Value);
-            }).WithName("CreateItem");
-
             app.MapGet("items", async (ISender sender, [FromQuery] string family) =>
             {
                 List<ItemResponseDto> items = await sender.Send(new GetItemsByFamilyCommand { Family = family });
@@ -62,13 +49,25 @@ namespace Api.Endpoints
 
             }).WithName("GetItemsByUserWorkspace");
 
+            app.MapPost("items", async (ISender sender, CreateItemCommand createItemCommand) =>
+             {
+                 Result<ItemResponseDto?> result = await sender.Send(createItemCommand);
+
+                 if (result.Error != null)
+                 {
+                     return Results.Problem(result.Error.Message, null, result.Error.StatusCode);
+                 }
+
+                 return Results.Ok(result.Value);
+             }).WithName("CreateItem");
+
             app.MapPost("items/reservations", async (ISender sender, CreateItemReservationCommand createItemReservationCommand) =>
             {
                 var result = await sender.Send(createItemReservationCommand);
 
                 if (!result.IsSuccess)
                 {
-                     return Results.Problem(result.Error!.Message, null, result.Error.StatusCode);
+                    return Results.Problem(result.Error!.Message, null, result.Error.StatusCode);
                 }
 
                 return Results.Ok(result.Value!);
@@ -78,13 +77,13 @@ namespace Api.Endpoints
             {
                 var result = await sender.Send(new DeleteItemReservationCommand { ItemId = itemId, UserId = userId });
 
-               if (!result.IsSuccess)
+                if (!result.IsSuccess)
                 {
-                     return Results.Problem(result.Error!.Message, null, result.Error.StatusCode);
+                    return Results.Problem(result.Error!.Message, null, result.Error.StatusCode);
                 }
 
                 return Results.Ok(result.Value!);
-            }).WithName("DeleteItemReservation"); ;
+            }).WithName("DeleteItemReservation"); 
 
             app.MapPost("items/{id}/attibute-values", async (ISender sender, int id, CreateItemAttributeValueCommand createItemAttributeValueCommand) =>
             {
@@ -99,5 +98,7 @@ namespace Api.Endpoints
 
             }).WithName("CreateItemAttributeValue");
         }
+
+        
     }
 }

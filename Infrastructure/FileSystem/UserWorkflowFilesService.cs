@@ -57,7 +57,7 @@ namespace Infrastructure.FileSystem
         {
             string userWorkflowsDirectory = GetUserWorkflowsDirectory(user);
 
-            UserFile userfile = new (filePath);
+            UserFile userfile = new(filePath);
 
             string newFilePath = $"{userWorkflowsDirectory}/{userfile.Name}{userfile.Extension}";
 
@@ -72,6 +72,25 @@ namespace Infrastructure.FileSystem
 
         }
 
+        public void MoveFilesBackToWorkspace(string fileNameWithoutExtension, string workspaceDirecroty, User user)
+        {
+            List<UserFile> userWorkflowFiles = GetUserUserWorkflowFiles(user, [".prt", ".asm", ".drw"]);
+            List<UserFile> filesToMove = userWorkflowFiles.Where(file => file.Name == fileNameWithoutExtension).ToList();
 
+            foreach (UserFile file in filesToMove)
+            {
+                try
+                {
+                    File.Move(file.FullPath, $"{workspaceDirecroty}/{file.Name}{file.Extension}");
+                }
+                catch
+                {
+                    throw new Exception($"Ocorreu um erro ao tentar mover o arquivo: '{file.FullPath}' para a workspace");
+                }
+
+
+            }
+
+        }
     }
 }
