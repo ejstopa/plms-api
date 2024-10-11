@@ -27,7 +27,7 @@ namespace Application.Features.Items.Queries.GetItemsByUserWorkspace
             if (user is null){
                 return Result<List<ItemResponseDto>>.Failure(new Error(400, "Usuário não encontrado"));
             }
-
+            
             List<Item> items = await _itemRepository.GetItemsByUserWorkspace(user);
 
             return Result<List<ItemResponseDto>>.Success(_mapper.Map<List<ItemResponseDto>>(items));

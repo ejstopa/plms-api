@@ -1,12 +1,11 @@
 using Application.Features.Items;
 using Application.Features.Items.Commands.CreateItem;
-using Application.Features.Items.Commands.CreateItemAttributeValue;
 using Application.Features.Items.Commands.CreateItemReservation;
 using Application.Features.Items.Commands.DeleteItemReservation;
 using Application.Features.Items.GetItemByIdQuery.Queries;
+using Application.Features.Items.Queries.GetItemsByDynamicParams;
 using Application.Features.Items.Queries.GetItemsByFamily;
 using Application.Features.Items.Queries.GetItemsByUserWorkspace;
-using Domain.Entities;
 using Domain.Results;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -85,18 +84,14 @@ namespace Api.Endpoints
                 return Results.Ok(result.Value!);
             }).WithName("DeleteItemReservation"); 
 
-            app.MapPost("items/{id}/attibute-values", async (ISender sender, int id, CreateItemAttributeValueCommand createItemAttributeValueCommand) =>
+            app.MapPost("items/query", async (ISender sender, GetItemsByDynamicParamsQuery getItemsByDynamicParamsQuery) =>
             {
-                Result<ItemAttributeValue?> result = await sender.Send(createItemAttributeValueCommand);
+                List<ItemResponseDto> items = await sender.Send(getItemsByDynamicParamsQuery);
 
-                if (!result.IsSuccess)
-                {
-                    return Results.Problem(result.Error!.Message, null, result!.Error.StatusCode);
-                }
+                return Results.Ok(items);
+            }).WithName("GetItemsByDynamicParams");
 
-                return Results.Ok(result.Value);
-
-            }).WithName("CreateItemAttributeValue");
+            
         }
 
         

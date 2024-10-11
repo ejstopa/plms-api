@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Linq;
 using System.Threading.Tasks;
+using Application.Features.ItemAttributes;
 using Application.Features.ItemFamilies;
 using Application.Features.ItemReservations.Commands;
 using Application.Features.Items;
@@ -27,6 +28,7 @@ namespace Application.Mapping
             CreateMap<ItemFamily, ItemFamilyResponseDto>();
             CreateMap<WorkflowInstance, WorkflowInstanceResponseDto>();
             CreateMap<WorkFlowStep, WorkflowStepResponseDto>();
+            CreateMap<ItemAttribute, ItemAttributeResponseDto>();
         }
     }
 }

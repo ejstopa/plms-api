@@ -19,6 +19,7 @@ namespace Application.Features.Items.Queries.GetItemsByFamily
             _mapper = mapper;
             _itemRepository = itemRepository;
         }
+        
         public async Task<List<ItemResponseDto>> Handle(GetItemsByFamilyCommand request, CancellationToken cancellationToken)
         {
             List<Item> items = await _itemRepository.GetItemsByFamily(request.Family);

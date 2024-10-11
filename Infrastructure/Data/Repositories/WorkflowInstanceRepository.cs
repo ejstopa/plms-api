@@ -26,6 +26,19 @@ namespace Infrastructure.Data.Repositories
             _userWorkflowFilesService = userWorkflowFilesService;
         }
 
+        public async Task<List<WorkflowInstance>> GetAllWorkflowInstances()
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql = "SELECT * FROM WorkflowInstances WHERE Status = 'InWork'";
+
+                List<WorkflowInstance> workflows = (await connection.QueryAsync<WorkflowInstance>(sql)).ToList();
+                await AddWorkflowsItemsWithModels(workflows, connection);
+
+                return workflows;
+            }
+        }
+        
         public async Task<WorkflowInstance> CreateWorkflowInstance(WorkflowInstance workflowInstance)
         {
             using (SqlConnection connection = new(_connectionString))
@@ -33,7 +46,7 @@ namespace Infrastructure.Data.Repositories
                 string sql = @"INSERT INTO WorkflowInstances VALUES(
                     @WorkflowTemplateId, @ItemId, @ItemName, @ItemRevision, 
                     @UserId, @CurrentStepId, @PreviousStepId, @Status,
-                    @Message, @ItemFamilyId);
+                    @Message, @ItemFamilyId, @ReturnedBy);
                     SELECT CAST(SCOPE_IDENTITY() as INT)";
 
                 int id = await connection.ExecuteScalarAsync<int>(sql, workflowInstance);
@@ -100,7 +113,7 @@ namespace Infrastructure.Data.Repositories
                     attributes.ToList().ForEach(attribute =>
                     {
                         List<ItemAttributeOption> attributeOptions = options.Where(option => option.ItemAttributeId == attribute.Id).ToList();
-                        attribute.options = attributeOptions;
+                        attribute.Options = attributeOptions;
                     });
 
                     step.ItemAttributes = attributes.ToList();
@@ -110,16 +123,17 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<WorkflowInstance?> UpdateWorkflowStep(int workflowInstanceId, int? newStepId, int? previousStepId, string? message = null)
+        public async Task<WorkflowInstance?> UpdateWorkflowStep(
+            int workflowInstanceId, int? newStepId, int? previousStepId, string? message = null, int? returnedBy = null)
         {
             using (SqlConnection connection = new(_connectionString))
             {
                 string sql =
                 @"UPDATE WorkflowInstances 
-                SET CurrentStepId = @newStepId, PreviousStepId = @previousStepId, Message = @message 
+                SET CurrentStepId = @newStepId, PreviousStepId = @previousStepId, Message = @message, ReturnedBy = @returnedBy
                 WHERE Id = @workflowInstanceId";
 
-                await connection.ExecuteAsync(sql, new { newStepId, previousStepId, workflowInstanceId, message });
+                await connection.ExecuteAsync(sql, new { newStepId, previousStepId, workflowInstanceId, message, returnedBy });
 
                 return await connection.QueryFirstAsync<WorkflowInstance>(
                     "SELECT * FROM WorkflowInstances WHERE Id = @workflowInstanceId", new { workflowInstanceId });
@@ -201,13 +215,13 @@ namespace Infrastructure.Data.Repositories
             {
                 string sql = "DELETE FROM WorkflowInstances WHERE Id = @workflowInstanceId";
 
-                int rowsDeleted = await connection.ExecuteAsync(sql, new {workflowInstanceId});
+                int rowsDeleted = await connection.ExecuteAsync(sql, new { workflowInstanceId });
 
                 return rowsDeleted != 0;
             }
         }
 
-         private async Task AddWorkflowsItemsWithModels(List<WorkflowInstance> workflows, SqlConnection connection)
+        private async Task AddWorkflowsItemsWithModels(List<WorkflowInstance> workflows, SqlConnection connection)
         {
             foreach (WorkflowInstance workflow in workflows)
             {
@@ -220,7 +234,7 @@ namespace Infrastructure.Data.Repositories
                 }
 
                 string userWorkflowsDirectory = _userWorkflowFilesService.GetUserWorkflowsDirectory(user);
-                List<UserFile> userFiles = _userWorkflowFilesService.GetUserUserWorkflowFiles(user, [".prt", ".asm", ".drw"]);
+                List<UserFile> userFiles = _userWorkflowFilesService.GetUserUserWorkflowFiles(user, [".prt", ".asm", ".drw", ".JPG"]);
 
                 List<UserFile> workflowFiles = [..
                 userFiles.Where(file => file.Name == workflow.ItemName)
@@ -254,6 +268,8 @@ namespace Infrastructure.Data.Repositories
             }
 
         }
+
+
     }
 
 

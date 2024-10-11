@@ -74,8 +74,8 @@ namespace Infrastructure.FileSystem
 
         public void MoveFilesBackToWorkspace(string fileNameWithoutExtension, string workspaceDirecroty, User user)
         {
-            List<UserFile> userWorkflowFiles = GetUserUserWorkflowFiles(user, [".prt", ".asm", ".drw"]);
-            List<UserFile> filesToMove = userWorkflowFiles.Where(file => file.Name == fileNameWithoutExtension).ToList();
+            List<UserFile> userWorkflowFiles = GetUserUserWorkflowFiles(user, [".prt", ".asm", ".drw", ".JPG"]);
+            List<UserFile> filesToMove = userWorkflowFiles.Where(file => file.Name.StartsWith(fileNameWithoutExtension)).ToList();
 
             foreach (UserFile file in filesToMove)
             {

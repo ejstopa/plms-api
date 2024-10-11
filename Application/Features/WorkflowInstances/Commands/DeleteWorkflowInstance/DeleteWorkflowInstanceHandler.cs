@@ -23,8 +23,8 @@ namespace Application.Features.WorkflowInstances.Commands.DeleteWorkflowInstance
         public DeleteWorkflowInstanceHandler(
             IWorkflowInstanceRepository workflowInstanceRepository,
             IUserRepository userRepository,
-            IItemRepository itemRepository, 
-            IUserWorkspaceFIlesService userWorkspaceFIlesService, 
+            IItemRepository itemRepository,
+            IUserWorkspaceFIlesService userWorkspaceFIlesService,
             IUserWorkflowFilesService userWorkflowFilesService)
         {
             _workflowInstanceRepository = workflowInstanceRepository;
@@ -50,18 +50,21 @@ namespace Application.Features.WorkflowInstances.Commands.DeleteWorkflowInstance
                 return Result<bool>.Failure(new Error(409, "Ocorreu um erro ao tentar excluir o workflow"));
             }
 
-            Item? item = await _itemRepository.GetItemById((int)workflow.ItemId!);
-
-            if (item is null)
+            if (workflow.ItemId != null)
             {
-                return Result<bool>.Failure(new Error(409, "Ocorreu um erro ao tentar encontrar o item do workflow"));
-            }
+                Item? item = await _itemRepository.GetItemById((int)workflow.ItemId!);
 
-            Item? itemUpdated = await _itemRepository.SetItemStatus((int)item.Id!, ItemStatus.checkedOut);
+                if (item is null)
+                {
+                    return Result<bool>.Failure(new Error(409, "Ocorreu um erro ao tentar encontrar o item do workflow"));
+                }
 
-            if (itemUpdated is null)
-            {
-                return Result<bool>.Failure(new Error(409, "Ocorreu um erro ao tentar atualizar o status do item do workflow"));
+                Item? itemUpdated = await _itemRepository.SetItemStatus((int)item.Id!, ItemStatus.checkedOut);
+
+                if (itemUpdated is null)
+                {
+                    return Result<bool>.Failure(new Error(409, "Ocorreu um erro ao tentar atualizar o status do item do workflow"));
+                }
             }
 
             User? user = await _userRepository.GetUserById(workflow.UserId);
@@ -73,7 +76,7 @@ namespace Application.Features.WorkflowInstances.Commands.DeleteWorkflowInstance
 
             string workspaceDirectory = _userWorkspaceFIlesService.GetUserWorkspaceDirectory(user);
 
-            _userWorkflowFilesService.MoveFilesBackToWorkspace(itemUpdated.Name, workspaceDirectory, user);
+            _userWorkflowFilesService.MoveFilesBackToWorkspace(workflow.ItemName, workspaceDirectory, user);
 
             return Result<bool>.Success(true);
         }

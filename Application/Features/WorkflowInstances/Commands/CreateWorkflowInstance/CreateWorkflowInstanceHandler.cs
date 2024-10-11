@@ -92,9 +92,9 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
                 return Result<WorkflowInstanceResponseDto>.Failure(new Error(404, "Usário não encontrado"));
             }
 
-            List<UserFile> workspaceFiles = _userWorkspaceFIlesService.GetUserUserWorkspaceFiles(user, [".prt", ".asm", ".drw"]);
+            List<UserFile> workspaceFiles = _userWorkspaceFIlesService.GetUserUserWorkspaceFiles(user, [".prt", ".asm", ".drw", ".JPG"]);
 
-            List<UserFile> itemFiles = workspaceFiles.Where(file => file.Name == request.ItemName).ToList();
+            List<UserFile> itemFiles = workspaceFiles.Where(file => file.Name.StartsWith(request.ItemName)).ToList();
             itemFiles.ForEach(file => _userWorkflowFilesService.MoveFileToWorkflowsDirectory(file.FullPath, user));
 
             WorkflowInstance workflowCreated = await _workflowInstanceRepository.CreateWorkflowInstance(workflowInstance);

@@ -12,6 +12,8 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Application.Features.WorkflowInstances.Commands.DeleteWorkflowInstance;
 using Application.Features.WorkflowInstances.Commands.ReturnWorkflowStep;
+using Application.Features.WorkflowInstances.Queries.GetAllWorkflowInstances;
+using Application.Features.WorkflowInstances.Commands.RejectWorkflowReturn;
 
 namespace Api.Endpoints
 {
@@ -42,6 +44,13 @@ namespace Api.Endpoints
 
                 return Results.Ok(workflowsResult.Value);
             }).WithName("GetWorkflowInstancesByDepartment");
+
+            app.MapGet("workflow-instances", async (ISender sender) =>
+            {
+                List<WorkflowInstanceResponseDto> workflows = await sender.Send(new GetAllWorkflowInstancesQuery());
+
+                return Results.Ok(workflows);
+            }).WithName("GetAllWorkflowInstances");
 
             app.MapGet("workflow-instances/{workflowId}/steps", async (ISender sender, int workflowId) =>
             {
@@ -121,6 +130,20 @@ namespace Api.Endpoints
                 return Results.Ok();
 
             }).WithName("ReturnWorkflowStep");
+
+            app.MapPost("workflow-instances/{workflowId}/step-return-rejections", async (
+            ISender sender, int workflowId, RejectWorkflowReturnCommand rejectWorkflowReturnCommand) =>
+            {
+                Result<WorkflowInstanceResponseDto> result = await sender.Send(rejectWorkflowReturnCommand);
+
+                if (!result.IsSuccess)
+                {
+                    return Results.Problem(result.Error!.Message, null, result!.Error.StatusCode);
+                }
+
+                return Results.Ok(result.Value);
+
+            }).WithName("RejectWorkflowReturn");
 
             app.MapDelete("workflow-instances/{id}", async (ISender sender, int id) =>
             {

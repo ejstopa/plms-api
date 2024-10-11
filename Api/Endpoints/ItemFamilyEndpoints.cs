@@ -21,6 +21,7 @@ namespace Api.Endpoints
 
                 return Results.Ok(itemFamilies);
             }).WithName("GetAllItemFamilies");
+
         }
     }
 }

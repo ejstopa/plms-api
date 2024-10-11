@@ -5,6 +5,7 @@ using Dapper;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Services;
+using Domain.ValueObjects;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
@@ -122,7 +123,7 @@ namespace Infrastructure.Data.Repositories
         public async Task<List<Item>> GetItemsByUserWorkspace(User user)
         {
             List<Item> checkedOutItemsWithModels = await GetCheckedOutItemsWithModels(user);
-            List<Item> newItemsWithModels = GetNewUserWorkspaceItems(user, checkedOutItemsWithModels);
+            List<Item> newItemsWithModels = await GetNewUserWorkspaceItems(user, checkedOutItemsWithModels);
 
             List<Item> items = [.. checkedOutItemsWithModels, .. newItemsWithModels];
 
@@ -191,11 +192,38 @@ namespace Infrastructure.Data.Repositories
                 {
                     return null;
                 }
-                
+
                 return await connection.QueryFirstAsync<Item>("SELECT * FROM Items WHERE Id = @itemId", new { itemId });
             }
         }
-       
+
+        public async Task<List<Item>> GetItemsByDynamicParams(int itemFamilyId, List<DynamicSearchParam> dynamicParams)
+        {
+            using (SqlConnection connection = new(_connectionString))
+            {
+                string sql =
+                @"SELECT * FROM ItemAttributeValues WHERE ItemId IN (SELECT Id 
+                FROM (
+                	SELECT *, ROW_NUMBER() 
+                	OVER(PARTITION BY Name ORDER BY Version DESC) 
+                	AS row_number FROM Items
+                ) AS t 
+                WHERE t.row_number = 1 AND T.FamilyId = @itemFamilyId)
+                AND ItemAttributeId IN @attributeIds";
+
+                List<ItemAttributeValue> attributeValues = (await connection.QueryAsync<ItemAttributeValue>(
+                    sql, new { itemFamilyId, attributeIds = dynamicParams.Select(param => param.ItemAttributeId).ToList() })).ToList();
+
+                List<int> itemsIds = GetItemIdByDynamicParamsAndValues(dynamicParams, attributeValues);
+                List<Item> items = (await connection.QueryAsync<Item>("SELECT * FROM Items WHERE Id IN @itemsIds", new { itemsIds })).ToList();
+                List<Model> models = await GetItemsModels(items);
+
+                List<Item> itemsWithModels = AddItemsModels(items, models);
+
+                return itemsWithModels;
+            }
+        }
+
         private async Task<List<Item>> GetCheckedOutItemsWithModels(User user)
         {
             List<UserFile> files = _userWorkspaceFIlesService.GetUserUserWorkspaceFiles(user, [".prt", ".asm", ".drw"]);
@@ -223,7 +251,7 @@ namespace Infrastructure.Data.Repositories
             return [.. checkedOutItemsWithModels.OrderBy(item => item.Name)];
         }
 
-        private List<Item> GetNewUserWorkspaceItems(User user, List<Item> checkedOutItems)
+        private async Task<List<Item>> GetNewUserWorkspaceItems(User user, List<Item> checkedOutItems)
         {
             List<UserFile> files = _userWorkspaceFIlesService.GetUserUserWorkspaceFiles(user, [".prt", ".asm", ".drw"]);
             List<UserFile> newFiles = files.Where(file => !checkedOutItems.Where(item => item.Name == file.Name).Any()).ToList();
@@ -261,7 +289,7 @@ namespace Infrastructure.Data.Repositories
                 });
             });
 
-            return newItems;
+            return await AddItemNewItemsDescriptions(newItems);
         }
 
         private async Task<List<Model>> GetItemsModels(List<Item> items)
@@ -296,7 +324,69 @@ namespace Infrastructure.Data.Repositories
             return itemsWithModels;
         }
 
+        private List<int> GetItemIdByDynamicParamsAndValues(
+            List<DynamicSearchParam> dynamicParams, List<ItemAttributeValue> attributeValues)
+        {
+            List<ItemAttributeValue> filterdAttributeValues = [.. attributeValues];
 
+            foreach (DynamicSearchParam param in dynamicParams)
+            {
+                if (param.ValueString == null)
+                {
+                    param.ValueString = string.Empty;
+                }
 
+                if (param.Operator == '=')
+                {
+                    filterdAttributeValues.RemoveAll(
+                        value => value.ItemAttributeId == param.ItemAttributeId
+                        && (value.ItemAttributeValueString != param.ValueString
+                        || value.ItemAttributeValueNumber != param.ValueNumber));
+                }
+                else if (param.Operator == '>')
+                {
+                    filterdAttributeValues.RemoveAll(
+                        value => value.ItemAttributeId == param.ItemAttributeId
+                        && value.ItemAttributeValueNumber <= param.ValueNumber);
+                }
+                else if (param.Operator == '<')
+                {
+                    filterdAttributeValues.RemoveAll(
+                        value => value.ItemAttributeId == param.ItemAttributeId
+                        && value.ItemAttributeValueNumber >= param.ValueNumber);
+                }
+            }
+
+            List<int> itemIds = filterdAttributeValues
+                .Select(value => value.ItemId)
+                .GroupBy(id => id)
+                .Where(group => group.Count() == dynamicParams.Count)
+                .Select(group => group.Key)
+                .ToList();
+
+            return itemIds;
+        }
+
+        private async Task<List<Item>> AddItemNewItemsDescriptions(List<Item> items)
+        {
+            List<Item> itemsWithDescription = [.. items];
+            
+            using (SqlConnection connection = new(_connectionString))
+            {
+                List<string> familyNames = itemsWithDescription.Select(item => item.Family).Distinct().ToList();
+                string sql = "SELECT * FROM ItemFamilies WHERE Name IN @familyNames";
+
+                List<ItemFamily> itemFamilies = (await connection.QueryAsync<ItemFamily>(sql, new { familyNames })).ToList();
+
+                foreach (Item item in itemsWithDescription)
+                {
+                    ItemFamily? family = itemFamilies.FirstOrDefault(family => family.Name == item.Family);
+
+                    item.Description = family?.Description ?? "";
+                }
+
+                return itemsWithDescription;
+            }
+        }
     }
 }

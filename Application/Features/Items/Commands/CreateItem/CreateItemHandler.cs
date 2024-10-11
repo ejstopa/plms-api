@@ -98,7 +98,7 @@ namespace Application.Features.Items.Commands.CreateItem
             {
                  ItemAttributeValue? valueCreated = null;
 
-                if (value.ItemAttributeValueString != null)
+                if (value.ItemAttributeValueString != null && value.ItemAttributeValueString != "")
                 {
                     valueCreated = await _itemAtributeValueRepository.CreateItemAttributeValue(
                         (int)newItem.Id!, value.ItemAttributeId, value.ItemAttributeValueString);

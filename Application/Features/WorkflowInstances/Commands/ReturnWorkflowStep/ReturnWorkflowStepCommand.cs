@@ -10,8 +10,9 @@ namespace Application.Features.WorkflowInstances.Commands.ReturnWorkflowStep
 {
     public class ReturnWorkflowStepCommand : IRequest<Result<bool>>
     {
-        public int WorkflowInstanceId {get; set;}
-        public int NewStepId {get; set;}
-        public string Message {get;set;} = string.Empty;
+        public int WorkflowInstanceId { get; set; }
+        public int NewStepId { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public int ReturnedBy { get; set; }
     }
 }

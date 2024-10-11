@@ -32,7 +32,7 @@ namespace Application.Features.WorkflowInstances.Commands.ReturnWorkflowStep
             }
 
             WorkflowInstance? workflowUpdated = await _workflowInstanceRepository.UpdateWorkflowStep(
-                request.WorkflowInstanceId, request.NewStepId, workflow.CurrentStepId, request.Message );
+                request.WorkflowInstanceId, request.NewStepId, workflow.CurrentStepId, request.Message, request.ReturnedBy );
             
             if (workflowUpdated is null)
             {

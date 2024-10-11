@@ -19,11 +19,6 @@ namespace Application.Features.WorkflowInstances.Queries.GetWorkflowInstanceValu
         {
             List<WorkflowInstanceValue> workflowInstanceValues = await _workflowInstanceValueRepository.GetWorkflowInstanceValues(request.WorkflowInstanceId);
 
-            if (workflowInstanceValues.Count == 0)
-            {
-                return  Result<List<WorkflowInstanceValue>>.Failure(new Error(404, "Nenhum valor encontrado"));
-            }
-
             return Result<List<WorkflowInstanceValue>>.Success(workflowInstanceValues);
         }
     }

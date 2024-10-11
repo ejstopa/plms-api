@@ -29,6 +29,7 @@ app.AddItemEndpoints();
 app.AddWorkflowInstancesEndpoints();
 app.AddItemNameReservationEndpoints();
 app.AddItemFamilyEndpoints();
+app.AddItemAttributeEndpoints();
 
 app.Run();
 

@@ -21,7 +21,7 @@ namespace Application.Features.WorkflowInstances.Commands.CreateWorkflowInstance
 
         public async Task<Result<WorkflowInstanceValue?>> Handle(CreateWorkflowInstanceValueCommand request, CancellationToken cancellationToken)
         {
-            ItemAttribute? atribute = await _itemAtributeRepository.GetItemAtribute(request.ItemAttributeId);
+            ItemAttribute? atribute = await _itemAtributeRepository.GetItemAtributeById(request.ItemAttributeId);
 
             if (atribute is null)
             {
